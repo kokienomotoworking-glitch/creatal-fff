@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Creatal fff</title>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/12.16.0/firebase-app-compat.js">
+<link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/12.16.0/firebase-auth-compat.js">
+<link rel="preload" as="script" href="https://www.gstatic.com/firebasejs/12.16.0/firebase-database-compat.js">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;600&display=swap" rel="stylesheet">
 <meta name="theme-color" content="#2a4a85">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -586,6 +593,224 @@ body.proj-dragging{cursor:grabbing;-webkit-user-select:none;user-select:none;}
 .bubble:has(.chat-img){padding:4px;}
 .bubble:has(.chat-img) .msg-text{padding:2px 8px 4px;}
 
+/* ---------- ラウンジ（トーク一覧＋チャット＋通話） ---------- */
+.nav-badge.dot{min-width:10px;width:10px;height:10px;padding:0;font-size:0;vertical-align:4px;}
+.lounge3{display:grid;grid-template-columns:200px minmax(0,1fr) 340px;gap:14px;align-items:start;}
+.ch-list{padding:10px;display:flex;flex-direction:column;gap:2px;position:sticky;top:12px;}
+.ch-item{display:flex;align-items:center;gap:6px;border:none;background:none;border-radius:8px;padding:9px 10px;font-size:14px;color:var(--text);cursor:pointer;text-align:left;font-family:inherit;}
+.ch-item:hover{background:#f1f5f9;}
+.ch-item.on{background:var(--primary-tint);color:var(--primary-dark);font-weight:700;}
+.ch-hash{color:var(--muted);font-weight:700;}
+.ch-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ch-add{border:1px dashed var(--border);background:none;border-radius:8px;padding:8px 10px;margin-top:6px;font-size:13px;color:var(--primary);cursor:pointer;font-family:inherit;}
+.lchat{padding:0;display:flex;flex-direction:column;overflow:hidden;height:calc(100vh - 220px);min-height:420px;}
+.lchat.collapsed{height:auto;min-height:0;}
+.lchat.collapsed .lchat-body{display:none;}
+.lchat-head{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;user-select:none;}
+.lchat.collapsed .lchat-head{border-bottom:none;}
+.lchat-head h3{margin:0;font-size:15px;}
+.lchat-head .spacer{flex:1;}
+.chev{color:var(--muted);font-size:13px;width:14px;}
+.lchat-body{flex:1;min-height:0;display:flex;flex-direction:column;}
+
+/* ---------- チャット本体（共通） ---------- */
+.cv{display:flex;flex-direction:column;height:100%;min-height:0;}
+.cv-scroll{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:10px 14px 14px;background:#f8fafc;}
+.cv.compact{height:340px;border:1px solid var(--border);border-radius:10px;overflow:hidden;}
+.cv-empty{text-align:center;color:var(--muted);font-size:13px;padding:40px 10px;line-height:1.8;}
+.cv-day{text-align:center;margin:12px 0 6px;}
+.cv-day span{font-size:11px;color:var(--muted);background:#e8edf4;border-radius:999px;padding:2px 10px;}
+.cv-msg{display:flex;flex-direction:column;align-items:flex-start;margin-top:10px;border-radius:10px;transition:background .3s;}
+.cv-msg.cont{margin-top:3px;}
+.cv-msg.mine{align-items:flex-end;}
+.cv-msg.flash{background:#fef9c3;}
+.cv-author{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);font-weight:700;margin:0 0 3px 2px;}
+.cv-av{width:22px;height:22px;border-radius:50%;background:var(--primary-soft);color:var(--primary-dark);display:inline-flex;align-items:center;justify-content:center;font-size:11px;}
+.cv-row{display:flex;align-items:flex-end;gap:6px;max-width:80%;}
+.cv-msg.mine .cv-row{flex-direction:row-reverse;}
+.cv-bubble{background:#fff;border:1px solid var(--border);border-radius:14px 14px 14px 4px;padding:7px 11px;font-size:13.5px;line-height:1.6;word-break:break-word;min-width:0;-webkit-touch-callout:none;}
+.cv-msg.mine .cv-bubble{background:var(--primary);color:#fff;border-color:var(--primary);border-radius:14px 14px 4px 14px;}
+.cv-msg.mine .cv-bubble a{color:#fff;}
+.cv-edited{display:block;font-size:10px;opacity:.7;margin-top:1px;}
+.cv-side{display:flex;flex-direction:column;align-items:flex-end;gap:1px;flex-shrink:0;}
+.cv-msg:not(.mine) .cv-side{align-items:flex-start;}
+.cv-time{font-size:10px;color:var(--muted);white-space:nowrap;}
+.cv-read{font-size:10px;color:var(--primary);font-weight:700;white-space:nowrap;}
+.cv-quote{font-size:12px;border-left:3px solid currentColor;opacity:.85;padding:2px 8px;margin:1px 0 5px;cursor:pointer;max-width:320px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.cv-quote b{margin-right:4px;}
+.cv-img{display:block;max-width:min(260px,100%);max-height:260px;border-radius:10px;margin:2px 0;cursor:zoom-in;background:#e2e8f0;min-width:80px;min-height:60px;object-fit:cover;}
+.cv-bubble:has(.cv-img){padding:4px;}
+.cv-bubble:has(.cv-img) .cv-text,.cv-bubble:has(.cv-img) .cv-quote{margin:4px 7px;}
+.cv-file{display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto;column-gap:8px;align-items:center;text-align:left;background:rgba(255,255,255,.14);border:1px solid rgba(148,163,184,.45);border-radius:10px;padding:7px 10px;cursor:pointer;color:inherit;font-family:inherit;max-width:260px;margin:1px 0 3px;}
+.cv-msg:not(.mine) .cv-file{background:#f8fafc;}
+.cv-file .fi{grid-row:1/3;font-size:22px;}
+.cv-file .fn{font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cv-file small{font-size:10.5px;opacity:.75;}
+.cv-reacts{display:flex;gap:4px;flex-wrap:wrap;margin-top:3px;}
+.cv-react,.cv-react-add{border:1px solid var(--border);background:#fff;border-radius:999px;padding:1px 8px;font-size:12px;cursor:pointer;font-family:inherit;line-height:1.6;}
+.cv-react.on{border-color:var(--primary);background:var(--primary-tint);color:var(--primary-dark);font-weight:700;}
+.cv-react-add{color:var(--muted);}
+.cv-tags{display:flex;gap:4px;margin-top:3px;flex-wrap:wrap;}
+.cv-tags span{font-size:10.5px;background:#fef3c7;color:#92400e;border-radius:6px;padding:1px 6px;}
+.cv-bar{display:flex;align-items:center;gap:8px;padding:6px 12px;background:var(--primary-tint);border-top:1px solid var(--border);font-size:12px;color:var(--primary-dark);}
+.cv-bar[hidden]{display:none;}
+.cv-bar-text{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.cv-bar-x{background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px;}
+.cv-input{display:flex;gap:8px;align-items:flex-end;padding:8px 10px;border-top:1px solid var(--border);background:#fff;}
+.cv-input textarea{flex:1;resize:none;max-height:180px;min-height:40px;line-height:1.5;font-size:14px;}
+.cv-attach{background:none;border:none;padding:4px;cursor:pointer;line-height:0;border-radius:8px;flex-shrink:0;}
+.cv-attach:hover{background:#f1f5f9;}
+.cv-attach .mona{display:block;filter:drop-shadow(0 1px 1px rgba(0,0,0,.2));}
+.tc-badge{display:inline-block;font-size:11px;color:var(--muted);background:#f1f5f9;border-radius:999px;padding:0 7px;margin-left:4px;vertical-align:1px;font-weight:600;}
+.tc-badge.unread{background:#e11d48;color:#fff;}
+.task-chat-row label{display:flex;align-items:center;gap:6px;}
+
+/* ---------- ポップアップ（メニュー・絵文字・添付・オンライン） ---------- */
+.popup{display:none;position:fixed;z-index:1250;background:#fff;border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 32px rgba(20,29,51,.2);padding:6px;max-width:calc(100vw - 16px);}
+#msgMenu{width:250px;}
+.mm-reacts{display:flex;gap:2px;justify-content:space-between;padding:2px 2px 6px;border-bottom:1px solid var(--border);}
+.mm-reacts button{background:none;border:none;font-size:20px;cursor:pointer;border-radius:8px;padding:3px 5px;line-height:1.2;}
+.mm-reacts button:hover{background:#f1f5f9;}
+.mm-more{font-size:16px!important;color:var(--muted);}
+.mm-acts{display:flex;flex-direction:column;padding-top:4px;}
+.mm-acts button,#attachMenu button{background:none;border:none;text-align:left;padding:9px 10px;border-radius:8px;cursor:pointer;font-size:14px;font-family:inherit;color:var(--text);}
+.mm-acts button:hover,#attachMenu button:hover{background:#f1f5f9;}
+.mm-acts .danger{color:var(--danger);}
+#attachMenu{display:none;flex-direction:column;}
+#attachMenu small{color:var(--muted);font-size:11px;}
+#emojiPicker{width:300px;}
+.ep-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:2px;}
+.ep-grid button{background:none;border:none;font-size:20px;cursor:pointer;border-radius:6px;padding:4px 0;line-height:1.2;}
+.ep-grid button:hover{background:#f1f5f9;}
+.ep-custom{display:flex;gap:6px;margin-top:6px;padding-top:6px;border-top:1px solid var(--border);}
+.ep-custom input{flex:1;min-width:0;font-size:16px;padding:6px 8px;}
+#onlinePop{width:230px;padding:10px;}
+.op-row{display:flex;align-items:center;gap:8px;padding:6px 4px;font-size:13px;}
+.op-dot{width:9px;height:9px;border-radius:50%;background:#cbd5e1;flex-shrink:0;}
+.op-dot.on{background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.2);}
+.op-h{font-size:11px;color:var(--muted);font-weight:700;margin:2px 4px 4px;}
+.online-pill{cursor:pointer;}
+
+@media (max-width:1100px){
+  .lounge3{grid-template-columns:180px minmax(0,1fr);}
+  .lounge3 .call-card{grid-column:1/-1;position:static;}
+}
+@media (max-width:760px){
+  .lounge3{grid-template-columns:1fr;}
+  .ch-list{flex-direction:row;overflow-x:auto;position:static;padding:6px;gap:4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+  .ch-list::-webkit-scrollbar{display:none;}
+  .ch-item,.ch-add{flex-shrink:0;padding:7px 12px;border-radius:999px;}
+  .ch-add{margin-top:0;}
+  .lounge3 .call-card{order:-1;}
+  .lchat{height:calc(100dvh - 210px);}
+  .cv-row{max-width:90%;}
+  .cv-bubble{font-size:15px;}
+  .cv-input textarea{font-size:16px;}
+}
+@media (max-width:760px){
+  .call-card{padding:12px 14px;}
+  .call-card h3{font-size:14px;margin-bottom:2px;}
+  .call-join{width:auto;margin:6px 6px 0 0;padding:8px 12px;font-size:13px;}
+  .call-note{display:none;}
+}
+
+/* ---------- アプリ名・ヘッダー ---------- */
+header .brand h1{font-family:"Outfit","Hiragino Sans",sans-serif;font-weight:600;font-size:24px;letter-spacing:.01em;}
+header .brand h1 .brand-icon{width:1.12em;height:1.12em;border-radius:.26em;}
+header .brand p{font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;letter-spacing:.08em;font-size:12px;opacity:.8;}
+.gate-card h2{font-family:"Outfit",sans-serif;font-weight:600;letter-spacing:.01em;font-size:26px;}
+.logout-btn{background:rgba(255,255,255,.95);color:#1e293b;border:none;border-radius:999px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;}
+.logout-btn:hover{background:#fff;}
+
+/* ---------- あと◯日 ---------- */
+.due-chip{display:inline-block;font-size:11px;font-weight:700;border-radius:999px;padding:1px 8px;background:#f1f5f9;color:#475569;white-space:nowrap;vertical-align:1px;}
+.due-chip.soon{background:#fff7ed;color:#c2410c;}
+.due-chip.late{background:#fee2e2;color:#b91c1c;}
+.dl-right{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+td .due-chip{margin-left:6px;}
+
+/* ---------- プロジェクトカード ---------- */
+.project-grid{align-items:start;}
+.project-card{display:flex;flex-direction:column;}
+.pj-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px;flex-wrap:wrap;}
+.pj-name{margin:0;font-size:16px;cursor:pointer;border-radius:6px;padding:2px 4px;margin-left:-4px;}
+.pj-name:hover{background:var(--primary-tint);color:var(--primary-dark);text-decoration:underline;}
+.pj-alert{font-size:11px;font-weight:700;border-radius:8px;padding:3px 8px;border:1px solid;white-space:nowrap;}
+.pj-alert.soon{color:#c2410c;background:#fff7ed;border-color:#fed7aa;}
+.pj-alert.late{color:#b91c1c;background:#fef2f2;border-color:#fecaca;}
+.pj-foot{display:flex;align-items:center;justify-content:space-between;margin-top:10px;padding-top:8px;border-top:1px dashed var(--border);}
+.pj-toggle{font-size:12px;color:var(--primary);font-weight:700;}
+.pj-add{width:32px;height:32px;border-radius:8px;border:1.5px solid var(--primary);background:#fff;color:var(--primary);font-size:20px;font-weight:700;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:inherit;}
+.pj-add:hover{background:var(--primary);color:#fff;}
+.pj-tasks{margin-top:10px;display:flex;flex-direction:column;gap:4px;cursor:default;}
+.pj-task{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:8px;background:#f8fafc;cursor:pointer;}
+.pj-task:hover{background:var(--primary-tint);}
+.pj-task.done .pj-t-title{text-decoration:line-through;color:var(--muted);}
+.pj-task.cancelled{opacity:.55;}
+.pj-check{width:22px;height:22px;flex-shrink:0;border-radius:50%;border:2px solid #cbd5e1;background:#fff;color:transparent;font-size:12px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}
+.pj-check.on{background:var(--ok);border-color:var(--ok);color:#fff;}
+.pj-t-main{flex:1;min-width:0;}
+.pj-t-title{font-size:13px;font-weight:600;line-height:1.4;}
+.pj-t-meta{font-size:11px;color:var(--muted);}
+.pj-empty{font-size:12px;color:var(--muted);padding:8px;}
+
+/* ---------- カレンダー ---------- */
+.cal-month-label{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;}
+.cal-view-tg{display:inline-flex;background:#e8edf4;border-radius:999px;padding:3px;margin-left:6px;}
+.cal-view-tg button{border:none;background:none;border-radius:999px;padding:5px 12px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;font-family:inherit;white-space:nowrap;}
+.cal-view-tg button.on{background:#fff;color:var(--primary);box-shadow:0 1px 3px rgba(0,0,0,.1);}
+.gcal-chip{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--muted);background:#fff;border:1px solid var(--border);border-radius:10px;padding:8px 12px;}
+.gcal-chip:has(.muted-text:only-child){background:none;border:none;padding:4px 0;}
+.gantt-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--border);border-radius:var(--radius);background:#fff;}
+.gantt{--label:190px;--day:30px;min-width:calc(var(--label) + var(--n) * var(--day));}
+.g-row{display:grid;grid-template-columns:var(--label) repeat(var(--n),minmax(var(--day),1fr));min-height:34px;border-bottom:1px solid #eef2f6;position:relative;}
+.g-row > *{grid-row:1;}
+.g-label{position:sticky;left:0;z-index:3;background:#fff;border-right:1px solid var(--border);padding:5px 10px;display:flex;flex-direction:column;justify-content:center;min-width:0;cursor:pointer;grid-column:1;}
+.g-label .g-t{font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.g-label small{font-size:10.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.g-head{position:sticky;top:0;z-index:4;background:#f8fafc;min-height:40px;}
+.g-head .g-label{background:#f8fafc;font-size:12px;font-weight:700;color:var(--muted);cursor:default;}
+.g-day{display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11px;color:#334155;line-height:1.2;}
+.g-day small{font-size:9.5px;color:var(--muted);}
+.g-day.sun,.g-day.sun small{color:#ef4444;}
+.g-day.sat,.g-day.sat small{color:#3b82f6;}
+.g-day.today{background:var(--primary);color:#fff;border-radius:8px;margin:3px 1px;}
+.g-day.today small{color:#fff;}
+.g-cell{border-left:1px solid #f1f5f9;}
+.g-cell.sun,.g-cell.sat{background:#fafbfd;}
+.g-cell.today{background:rgba(47,90,168,.08);}
+.g-group{background:#f8fafc;min-height:28px;}
+.g-group .g-label{background:#f1f5f9;font-size:12px;font-weight:800;color:var(--primary-dark);cursor:default;}
+.g-bar{align-self:center;height:22px;margin:0 2px;border:none;border-radius:6px;background:var(--c);color:#fff;font-size:11px;font-weight:700;text-align:left;padding:0 8px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;cursor:pointer;z-index:2;font-family:inherit;box-shadow:0 1px 2px rgba(0,0,0,.15);}
+.g-bar span{overflow:hidden;text-overflow:ellipsis;display:block;}
+.g-bar.cut-l{border-top-left-radius:0;border-bottom-left-radius:0;margin-left:0;}
+.g-bar.cut-r{border-top-right-radius:0;border-bottom-right-radius:0;margin-right:0;}
+.g-ms{align-self:center;justify-self:center;border:none;background:none;color:var(--c);font-size:16px;cursor:pointer;z-index:2;padding:0;line-height:1;}
+.g-meet{align-self:center;justify-self:center;border:none;background:none;color:var(--mt);font-size:16px;cursor:pointer;z-index:2;padding:0;}
+.g-meet-label{color:var(--mt);font-weight:700;font-size:12px;}
+@media (max-width:640px){
+  .gantt{--label:120px;--day:28px;}
+  .cal-view-tg{margin:6px 0 0;}
+}
+
+/* ---------- メモ（同時編集） ---------- */
+.memo-wrap{position:relative;}
+.memo-cursors{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+.mc{position:absolute;width:2px;border-radius:1px;transition:left .08s,top .08s;}
+.mc span{position:absolute;bottom:100%;left:-1px;color:#fff;font-size:10px;font-weight:700;padding:1px 5px;border-radius:4px 4px 4px 0;white-space:nowrap;line-height:1.4;}
+.memo-mirror{position:absolute;visibility:hidden;left:-9999px;top:0;white-space:pre-wrap;word-wrap:break-word;overflow-wrap:break-word;border:0;box-sizing:content-box;}
+.memo-typing{min-height:20px;font-size:12px;color:var(--primary);font-weight:700;margin-top:6px;}
+
+/* ---------- 設定 ---------- */
+.settings-card{margin-top:16px;}
+.settings-card h3{margin-bottom:6px;}
+.settings-card .muted-text{margin-bottom:12px;}
+.settings-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.tt-help{margin-top:12px;font-size:13px;}
+.tt-help summary{cursor:pointer;color:var(--primary);font-weight:700;}
+.tt-help ol{margin:8px 0 0;padding-left:20px;line-height:1.8;color:#334155;}
+.deps-note{font-size:11px;color:var(--muted);padding:4px 2px;}
+
 </style>
 </head>
 <body>
@@ -667,7 +892,7 @@ body.proj-dragging{cursor:grabbing;-webkit-user-select:none;user-select:none;}
     <p>タスク管理アプリ</p>
   </div>
   <div class="header-right">
-    <div class="online-pill" id="onlinePill" title=""><span class="conn-dot" id="connDot"></span><span id="onlineText">接続中…</span></div>
+    <div class="online-pill" id="onlinePill" title="" onclick="toggleOnlinePopover(event)"><span class="conn-dot" id="connDot"></span><span id="onlineText">接続中…</span></div>
     <div class="mode-toggle" role="tablist" aria-label="モード切り替え">
       <button data-mode="all" onclick="setMode('all')">全体</button>
       <button data-mode="me" onclick="setMode('me')">個人</button>
@@ -810,6 +1035,7 @@ body.proj-dragging{cursor:grabbing;-webkit-user-select:none;user-select:none;}
       <div id="pendingInvites"></div>
     </div>
     <div id="memberList"></div>
+    <div id="settingsBox"></div>
   </section>
 
   <!-- アイデア -->
@@ -837,20 +1063,19 @@ body.proj-dragging{cursor:grabbing;-webkit-user-select:none;user-select:none;}
     <div id="meetingView"></div>
   </section>
 
-  <!-- ラウンジ（雑談・通話） -->
+  <!-- ラウンジ（トーク・通話） -->
   <section id="lounge" class="section">
-    <div class="lounge">
-      <div class="card chat-card">
-        <div class="chat-head">
-          <h3>雑談</h3>
-          <button class="mini-link" id="chatNotifBtn" onclick="enableChatNotif()">🔕 通知をオンにする</button>
+    <div class="lounge3">
+      <aside class="card ch-list" id="chList"></aside>
+      <div class="card lchat" id="loungeChat">
+        <div class="lchat-head" onclick="toggleLoungeCollapse(event)" title="押すと折りたたみ／展開">
+          <span class="chev" id="loungeChev">▾</span>
+          <h3 id="loungeChName"># 雑談</h3>
+          <span class="spacer"></span>
+          <button class="mini-link" id="chatNotifBtn" onclick="enableNotifications()">🔕 通知をオンにする</button>
+          <button class="mini-link" id="chEditBtn" onclick="openChannelModal(lounge.cid)" title="トークの名前を変える・削除">⚙︎</button>
         </div>
-        <div class="chat-scroll" id="chatScroll"><div id="chatList"></div></div>
-        <div class="chat-input">
-          <label class="img-btn" title="画像を送る">🖼<input type="file" accept="image/*" id="chatFile" hidden></label>
-          <textarea id="chatText" rows="1" placeholder="メッセージ（Enterで送信／Shift+Enterで改行）"></textarea>
-          <button class="btn" onclick="sendChat()">送信</button>
-        </div>
+        <div class="lchat-body" id="loungeChatBody"></div>
       </div>
       <div class="card call-card">
         <div id="callHead"></div>
@@ -864,7 +1089,7 @@ body.proj-dragging{cursor:grabbing;-webkit-user-select:none;user-select:none;}
   <section id="memo" class="section">
     <p class="muted-text memo-label" id="memoLabel"></p>
     <div class="card memo-card">
-      <textarea id="memoContent" placeholder="メモを入力..."></textarea>
+      <div class="memo-wrap" id="memoWrap"><textarea id="memoContent" placeholder="メモを入力..."></textarea><div class="memo-cursors" id="memoCursors"></div></div><div class="memo-typing" id="memoTyping"></div>
     </div>
     <div class="memo-status" id="memoStatus">保存済み</div>
   </section>
@@ -919,7 +1144,10 @@ body.proj-dragging{cursor:grabbing;-webkit-user-select:none;user-select:none;}
         <select id="tPriority"><option value="高">高（遅れると次が止まる）</option><option value="中" selected>中</option><option value="低">低（後回しにできる）</option></select>
       </div>
     </div>
-    <div class="form-row"><label>締切</label><input type="date" id="tDeadline"></div>
+    <div class="form-2col">
+      <div class="form-row"><label>開始日 <span class="muted-text" style="font-weight:400;">（取り組み始める日）</span></label><input type="date" id="tStart"></div>
+      <div class="form-row"><label>締切</label><input type="date" id="tDeadline" onchange="refreshDepsOptions()"></div>
+    </div>
     <div class="form-row">
       <label>担当者 <span class="muted-text" style="font-weight:400;">（複数選べます）</span></label>
       <div class="check-list" id="tAssignees"></div>
@@ -929,6 +1157,7 @@ body.proj-dragging{cursor:grabbing;-webkit-user-select:none;user-select:none;}
       <div class="check-list column" id="tDeps"></div>
     </div>
     <div class="form-row"><label>メモ</label><textarea id="tNote" rows="2" placeholder="補足・やり方・連絡先など"></textarea></div>
+    <div class="form-row task-chat-row" id="tChatRow" style="display:none;"><label>💬 このタスクのチャット</label><div id="tChatBox"></div></div>
     <div class="modal-actions">
       <div class="done-toggle" id="tDoneToggle" onclick="toggleTaskDoneInModal()">
         <div class="toggle-track" id="tToggleTrack"><div class="toggle-thumb"></div></div>
@@ -1032,8 +1261,27 @@ body.proj-dragging{cursor:grabbing;-webkit-user-select:none;user-select:none;}
   </div>
 </div>
 
+<!-- ============ トークの作成・編集 ============ -->
+<div class="modal-overlay" id="channelModal">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width:420px;">
+    <h3 id="chModalTitle">新しいトーク</h3>
+    <input type="hidden" id="chId">
+    <div class="form-row"><label>トークの名前</label><input type="text" id="chNameInput" placeholder="例：SNS企画、イベント準備" autocomplete="off" onkeydown="if(event.key==='Enter'&&!event.isComposing){event.preventDefault();saveChannel()}"></div>
+    <div class="modal-actions">
+      <button class="btn danger" id="chDeleteBtn" onclick="deleteChannel()">削除</button>
+      <span class="spacer"></span>
+      <button class="btn secondary" onclick="closeModal('channelModal')">キャンセル</button>
+      <button class="btn" onclick="saveChannel()">保存</button>
+    </div>
+  </div>
+</div>
+
 <div class="call-mini" id="callMini"></div>
-<div class="lightbox" id="lightbox"><img id="lightboxImg" alt=""></div>
+<div class="lightbox" id="lightbox" onclick="this.classList.remove('active')"><img id="lightboxImg" alt=""></div>
+<div class="popup" id="msgMenu"></div>
+<div class="popup" id="emojiPicker"></div>
+<div class="popup" id="attachMenu"></div>
+<div class="popup" id="onlinePop"></div>
 
 <!-- ============ 確認ダイアログ ============ -->
 <div class="modal-overlay dialog-overlay" id="dialog">
@@ -1098,8 +1346,10 @@ function createFirebaseStore(){
     async init(){
       const v = CFG.firebaseVersion || "12.16.0";
       await loadScript(`https://www.gstatic.com/firebasejs/${v}/firebase-app-compat.js`);
-      await loadScript(`https://www.gstatic.com/firebasejs/${v}/firebase-auth-compat.js`);
-      await loadScript(`https://www.gstatic.com/firebasejs/${v}/firebase-database-compat.js`);
+      await Promise.all([
+        loadScript(`https://www.gstatic.com/firebasejs/${v}/firebase-auth-compat.js`),
+        loadScript(`https://www.gstatic.com/firebasejs/${v}/firebase-database-compat.js`)
+      ]);
       firebase.initializeApp(CFG.firebase);
       auth = firebase.auth();
       db   = firebase.database();
@@ -1235,7 +1485,7 @@ const Store = DEMO ? createDemoStore() : createFirebaseStore();
 /* =====================================================================
  * 状態
  * ===================================================================== */
-const S = { members: [], projects: [], tasks: [], flowNotes: [], ideas: [], meetings: [], chat: [], allowed: {}, presence: {} };
+const S = { members: [], projects: [], tasks: [], flowNotes: [], ideas: [], meetings: [], chatMsgs: {}, chatRead: {}, channels: [], allowed: {}, presence: {} };
 const me = { user: null, memberId: null };
 let mode = null;              // "all" | "me"
 let currentTab = null;
@@ -1366,23 +1616,27 @@ async function signIn(){
   catch(e){ console.error(e); notice("サインインに失敗しました：" + (e.message || e)); }
 }
 async function signOut(){
+  clearBootCache();
   teardown();
   me.user = null; me.memberId = null; mode = null;
   document.body.removeAttribute("data-mode");
   await Store.signOut();
 }
-function teardown(){
-  leaveCall(true); chatMaxAt = null; call.parts = {}; call.lastOthers = 0;
+function teardown(keep){
+  leaveCall(true); call.parts = {}; call.lastOthers = 0; chatInit.main = chatInit.chats = false; chatBaseline = 0; detachCollabMemo();
   if(document.getElementById("callBanner")) renderCallUi();
   unsubs.forEach(f => { try{ f(); }catch(e){} }); unsubs = [];
   if(memoUnsub){ memoUnsub(); memoUnsub = null; }
   if(stopPresence){ stopPresence(); stopPresence = null; }
-  Object.assign(S, { members: [], projects: [], tasks: [], flowNotes: [], ideas: [], meetings: [], chat: [], allowed: {}, presence: {} });
+  if(!keep) Object.assign(S, { members: [], projects: [], tasks: [], flowNotes: [], ideas: [], meetings: [], chatMsgs: {}, chatRead: {}, channels: [], allowed: {}, presence: {} });
 }
 
 async function onAuthChanged(user){
-  teardown();
-  me.user = user; me.memberId = null;
+  const keep = !!(user && cachedBoot && user.email === cachedBoot);
+  if(!keep && cachedBoot){ clearBootCache(); document.body.removeAttribute("data-mode"); mode = null; }
+  teardown(keep);
+  const keepMember = keep ? me.memberId : null;
+  me.user = user; me.memberId = keepMember;
   if(!user){ showGate("gateSignin"); hideLoading(); return; }
   await checkAccess();
   hideLoading();
@@ -1405,7 +1659,7 @@ async function bootstrapFirstMember(){
 
 /* 招待済みのユーザーとして、リアルタイム購読を開始 */
 async function startSession(){
-  teardown();
+  teardown(!!cachedBoot);
   const first = {};
   const ready = new Promise(res => {
     const sub = (key, path, apply) => {
@@ -1421,10 +1675,16 @@ async function startSession(){
     sub("flowNotes", P("flowNotes"), v => S.flowNotes = arr(v).filter(n => n && n.id));
     sub("ideas",     P("ideas"),     v => S.ideas     = arr(v).filter(i => i && i.id));
     sub("meetings",  P("meetings"),  v => S.meetings  = arr(v).filter(m => m && m.id));
-    sub("chat",      P("chat"),      v => { S.chat = arr(v).filter(m => m && m.id); onChatData(); });
+    sub("chat",      P("chat"),      v => onChatSource("main", v));
   });
   unsubs.push(Store.listen(P("allowed"), v => { S.allowed = v || {}; onAllowedChanged(); }));
+  unsubs.push(Store.listen(P("chats"), v => onChatSource("chats", v)));
+  unsubs.push(Store.listen(P("chatRead"), v => onChatRead(v)));
+  unsubs.push(Store.listen(P("channels"), v => { S.channels = arr(v).filter(c => c && c.id); scheduleRender(); }));
   unsubs.push(Store.listen(P("call/participants"), v => onCallParticipants(v)));
+  unsubs.push(Store.listen(P("memoMeta"), v => onMemoMeta(v)));
+  unsubs.push(Store.listen(P("config/onesignal"), v => onOsConfig(v)));
+  unsubs.push(Store.listen(P("config/gcal"), v => onGcalConfig(v)));
   unsubs.push(Store.listen(P("presence"), v => { S.presence = v || {}; renderOnline(); if(currentTab === "members") renderMembers(); }));
   unsubs.push(Store.onConnected(c => { connected = c; renderOnline(); }));
   await ready;
@@ -1456,6 +1716,7 @@ async function submitName(){
 }
 
 function afterMemberReady(){
+  cachedBoot = null; loadYjs().catch(() => {});
   const m = memberById(me.memberId);
   stopPresence = Store.presence(P("presence/" + me.user.uid), { name: m ? m.name : me.user.email, memberId: me.memberId });
   const saved = lsGet("fff_mode", null);
@@ -1466,6 +1727,8 @@ function afterMemberReady(){
 function enterApp(m){
   hideGate();
   setMode(m);
+  const hs = location.hash.slice(1);
+  if(hs && TABS[mode].some(t => t[0] === hs)){ switchTab(hs); try{ history.replaceState(null, "", location.pathname + location.search); }catch(e){} }
 }
 
 function setMode(m){
@@ -1488,9 +1751,9 @@ function renderHeader(){
   const m = memberById(me.memberId);
   const name = m ? m.name : u.name;
   const av = u.photo ? `<img class="avatar" src="${esc(u.photo)}" alt="">` : `<span class="avatar-ph">${esc((name || "?").charAt(0))}</span>`;
-  const bell = "";
+  const bell = notifBellHtml();
   document.getElementById("userChip").innerHTML =
-    `${av}<span class="uname">${esc(name)}</span>${bell}<button class="icon-btn" onclick="confirmSignOut()" title="ログアウト">⏻</button>`;
+    `${av}<span class="uname">${esc(name)}</span>${bell}<button class="logout-btn" onclick="confirmSignOut()" title="ログアウト">ログアウト</button>`;
   document.getElementById("demoBanner").style.display = DEMO ? "" : "none";
 }
 async function confirmSignOut(){ if(await ask("ログアウトしますか？", { ok: "ログアウト" })) signOut(); }
@@ -1502,11 +1765,12 @@ function renderOnline(){
   const online = Object.values(S.presence || {}).filter(p => p && (!DEMO || now - (p.at || 0) < 45000));
   const names = [...new Set(online.map(p => p.name))];
   document.getElementById("onlineText").textContent = connected ? `${names.length}人がオンライン` : "オフライン（再接続中）";
-  document.getElementById("onlinePill").title = names.join("、");
+  document.getElementById("onlinePill").title = "押すと一覧を表示";
+  if(document.getElementById("onlinePop").style.display === "block") drawOnlinePopover();
 }
 
 function renderNav(){
-  setTimeout(updateLoungeBadge, 0);
+  setTimeout(updateNavBadges, 0);
   document.getElementById("mainNav").innerHTML = TABS[mode].map(([id, label]) =>
     `<button data-tab="${id}" onclick="switchTab('${id}')">${label}</button>`).join("");
 }
@@ -1518,7 +1782,7 @@ function switchTab(tab){
   document.body.classList.toggle("wide-main", tab === "calendar" || tab === "taskflow");
   lsSet("fff_tab_" + mode, tab);
   if(tab === "memo") attachMemo(); else detachMemo();
-  renderCallMini();
+  renderCallMini(); closePopups();
   renderCurrent();
 }
 
@@ -1535,6 +1799,7 @@ function scheduleRender(){
     renderHeader();
     renderCurrent();
     refreshOpenModals();
+    updateNavBadges(); saveCacheSoon(); gcalMaybeSync();
   });
 }
 function renderCurrent(){
@@ -1577,7 +1842,7 @@ function renderDashboard(){
     <div class="dl-row" onclick="openTaskModal('${t.id}')">
       <div><div class="t">${prioBadge(t)} ${esc(t.title)}</div>
       <div class="muted-text">${esc(projectName(t.projectId))} ・ ${assigneeLabel(t)}</div></div>
-      <span class="badge ${isOverdue(t) ? "overdue" : "date"}">${isOverdue(t) ? "期限超過 " : ""}${fmtDate(t.deadline)}</span>
+      <span class="dl-right">${dueChip(t)}<span class="badge ${isOverdue(t) ? "overdue" : "date"}">${fmtDate(t.deadline)}</span></span>
     </div>`).join("") : `<div class="empty">締切のある未完了タスクはありません</div>`;
 
   const ps = visibleProjects();
@@ -1625,7 +1890,7 @@ function renderMyTasks(){
       <div class="my-task ${late ? "overdue" : ""} ${done || cancelled ? "done" : ""}" onclick="openTaskModal('${t.id}')">
         <button class="check-btn ${done ? "checked" : ""}" onclick="event.stopPropagation();toggleMemberStatus('${t.id}','${me.memberId}')" aria-label="完了にする">✓</button>
         <div class="body">
-          <div class="title">${prioBadge(t)} ${esc(t.title)}${cancelled ? "（取りやめ）" : ""}</div>
+          <div class="title">${prioBadge(t)} ${esc(t.title)}${cancelled ? "（取りやめ）" : ""}${chatBadge(t)}</div>
           <div class="meta">${esc(projectName(t.projectId))} ・ 締切 ${fmtDate(t.deadline)}${others.length ? ` ・ 一緒に担当：${esc(others.join("、"))}` : ""}</div>
         </div>
         <div class="due ${dueCls}">${due}</div>
@@ -1634,7 +1899,7 @@ function renderMyTasks(){
 }
 
 /* ---------- プロジェクト ---------- */
-function renderProjects(){
+function renderProjectsOld(){
   if(projDragActive){ projRenderPending = true; return; }
   const list = visibleProjects();
   const el = document.getElementById("projectList");
@@ -1742,7 +2007,7 @@ async function shiftDeadlines(){
 function fillSelect(id, html){ const el = document.getElementById(id); const v = el.value; el.innerHTML = html; el.value = v; if(el.value !== v) el.value = ""; }
 function renderTasks(){
   const ui = lsGet("fff_ui", {});
-  fillSelect("fProject", `<option value="">全プロジェクト</option><option value="__none__">未分類</option>` + S.projects.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join(""));
+  fillSelect("fProject", `<option value="">全プロジェクト</option><option value="__none__">未分類</option>` + sortProjects(S.projects).map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join(""));
   fillSelect("fAssignee", `<option value="">全担当者</option><option value="__none__">未割当のみ</option>` + S.members.map(m => `<option value="${m.id}">${esc(m.name)}</option>`).join(""));
   if(!renderTasks._restored){
     renderTasks._restored = true;
@@ -1767,11 +2032,11 @@ function renderTasks(){
       const status = ds === "取りやめ" ? `<span class="badge cancelled">取りやめ</span>`
         : `<button class="badge status-btn ${cls}" onclick="event.stopPropagation();statusPopover('${t.id}',event)" title="タップで完了／未完了を切り替え">${label}</button>`;
       return `<tr onclick="openTaskModal('${t.id}')">
-        <td>${esc(t.title)}</td>
+        <td>${esc(t.title)}${chatBadge(t)}</td>
         <td>${prioBadge(t)}</td>
         <td>${esc(projectName(t.projectId))}</td>
         <td>${assigneeLabel(t)}</td>
-        <td class="nowrap">${isOverdue(t) ? `<span class="badge overdue">${fmtDate(t.deadline)}</span>` : t.deadline ? fmtDate(t.deadline) : "-"}</td>
+        <td class="nowrap">${isOverdue(t) ? `<span class="badge overdue">${fmtDate(t.deadline)}</span>` : t.deadline ? fmtDate(t.deadline) : "-"}${dueChip(t)}</td>
         <td>${status}</td></tr>`;
     }).join("")}</tbody></table></div>`;
 }
@@ -1833,7 +2098,7 @@ function openTaskModal(id, opts = {}){
   document.getElementById("taskModalTitle").textContent = t ? "タスクを編集" : "新規タスク";
   document.getElementById("tTitle").value = t ? t.title : "";
   document.getElementById("tStatus").value = t ? t.status || "未完了" : "未完了";
-  const projs = mode === "me" ? visibleProjects() : S.projects;
+  const projs = mode === "me" ? visibleProjects() : sortProjects(S.projects);
   const projOpts = (t && t.projectId && !projs.find(p => p.id === t.projectId)) ? [...projs, S.projects.find(p => p.id === t.projectId)].filter(Boolean) : projs;
   document.getElementById("tProject").innerHTML = `<option value="">未分類</option>` + projOpts.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("");
   let pid = t ? t.projectId || "" : (opts.projectId || "");
@@ -1844,6 +2109,7 @@ function openTaskModal(id, opts = {}){
   }
   document.getElementById("tProject").value = pid;
   document.getElementById("tPriority").value = t ? prioOf(t) : "中";
+  document.getElementById("tStart").value = t ? t.start || "" : "";
   document.getElementById("tDeadline").value = t ? t.deadline || "" : "";
   document.getElementById("tNote").value = t ? t.note || "" : "";
   memberChecks("#tAssignees", "ta-check", t ? assigneeIds(t) : (opts.assignMe || mode === "me" ? [me.memberId] : []));
@@ -1853,6 +2119,7 @@ function openTaskModal(id, opts = {}){
   document.getElementById("tCancelBtn").textContent = t && t.status === "取りやめ" ? "取りやめを解除" : "取りやめ";
   refreshDoneToggle(t);
   openModal("taskModal");
+  setupTaskChat(t);
   if(!t) setTimeout(() => document.getElementById("tTitle").focus(), 50);
 }
 function refreshDoneToggle(t){
@@ -1867,10 +2134,14 @@ function refreshDepsOptions(checked){
   const pid = document.getElementById("tProject").value;
   const cur = document.getElementById("tId").value;
   if(!Array.isArray(checked)) checked = [...document.querySelectorAll(".td-check:checked")].map(c => c.value);
-  const opts = sortTasks(S.tasks.filter(t => t.projectId === pid && t.id !== cur && pid));
+  const dl = document.getElementById("tDeadline").value;
+  const allDeps = sortTasks(S.tasks.filter(t => t.projectId === pid && t.id !== cur && pid));
+  const opts = allDeps.filter(t => !dl || !t.deadline || t.deadline <= dl || checked.includes(t.id));
+  const hiddenDeps = allDeps.length - opts.length;
   document.getElementById("tDeps").innerHTML = opts.length
     ? opts.map(t => `<label><input type="checkbox" class="td-check" value="${t.id}" ${checked.includes(t.id) ? "checked" : ""}> ${esc(t.title)} <span class="muted-text">${t.deadline ? fmtDate(t.deadline) : ""}</span></label>`).join("")
-    : `<span class="hint">${pid ? "同じプロジェクトの他のタスクがありません" : "プロジェクトを選ぶと選べます"}</span>`;
+    : `<span class="hint">${pid ? (hiddenDeps ? "選べるタスクがありません" : "同じプロジェクトの他のタスクがありません") : "プロジェクトを選ぶと選べます"}</span>`;
+  if(hiddenDeps) document.getElementById("tDeps").insertAdjacentHTML("beforeend", `<span class="deps-note">※ 締切がこのタスクより後のタスク（${hiddenDeps}件）は表示していません</span>`);
 }
 function wouldCycle(taskId, deps){
   const seen = new Set();
@@ -1886,11 +2157,13 @@ function wouldCycle(taskId, deps){
 async function saveTask(){
   const title = document.getElementById("tTitle").value.trim();
   if(!title){ toast("タスク名を入力してください"); return; }
+  { const s0 = document.getElementById("tStart").value, d0 = document.getElementById("tDeadline").value; if(s0 && d0 && s0 > d0){ toast("開始日が締切より後になっています"); return; } }
   let id = document.getElementById("tId").value;
   const old = id ? S.tasks.find(x => x.id === id) : null;
   if(!id) id = uid();
   const deps = [...document.querySelectorAll(".td-check:checked")].map(c => c.value);
   const linkIdea = pendingIdeaLink;
+  const linkChat = pendingChatTaskLink;
   if(wouldCycle(id, deps)){ notice("この先行タスクを設定すると、タスクが循環してしまいます（AがBの前提で、BもAの前提になっている状態）。選び直してください。"); return; }
   const ids = [...document.querySelectorAll(".ta-check:checked")].map(c => c.value);
   const prevStatuses = (old && old.memberStatuses) || {};
@@ -1903,6 +2176,7 @@ async function saveTask(){
     projectId: pid,
     priority: document.getElementById("tPriority").value,
     deadline: document.getElementById("tDeadline").value,
+    start: document.getElementById("tStart").value,
     note: document.getElementById("tNote").value.trim(),
     assigneeIds: ids,
     memberStatuses,
@@ -1915,13 +2189,15 @@ async function saveTask(){
   closeModal("taskModal");
   await write(() => Store.set(P("tasks/" + id), clean(rec)));
   if(linkIdea && !old) await linkIdeaToTask(linkIdea, id);
+  if(linkChat && !old) await linkChatToTask(linkChat, id);
+  notifyAssigned(old, rec);
   toast("タスクを保存しました");
 }
 
 async function deleteTask(){
   const id = document.getElementById("tId").value; if(!id) return;
   if(!await ask("このタスクを削除しますか？", { ok: "削除する", danger: true })) return;
-  const upd = { ["tasks/" + id]: null };
+  const upd = { ["tasks/" + id]: null, ["chats/" + taskCh(id)]: null, ["chatRead/" + taskCh(id)]: null };
   S.tasks.filter(t => arr(t.dependsOn).includes(id)).forEach(t => upd[`tasks/${t.id}/dependsOn`] = arr(t.dependsOn).filter(d => d !== id));
   closeModal("taskModal");
   await write(() => Store.update(ROOT, upd), "削除に失敗しました");
@@ -1956,7 +2232,7 @@ async function toggleTaskDoneInModal(){
 function openModal(id){ document.getElementById(id).classList.add("active"); }
 function closeModal(id){
   document.getElementById(id).classList.remove("active");
-  if(id === "taskModal"){ document.getElementById("tId").value = ""; pendingIdeaLink = null; }
+  if(id === "taskModal"){ document.getElementById("tId").value = ""; pendingIdeaLink = null; pendingChatTaskLink = null; if(taskChat.view) taskChat.view.setChannel(null); closePopups(); }
   if(id === "ideaModal") document.getElementById("iId").value = "";
   if(id === "meetingModal"){ document.getElementById("mId").value = ""; pendingAgendaIdea = null; }
   if(id === "projectModal") document.getElementById("pId").value = "";
@@ -1974,7 +2250,7 @@ document.addEventListener("keydown", e => {
 let calY = new Date().getFullYear(), calM = new Date().getMonth();
 function calMove(d){ calM += d; if(calM < 0){ calM = 11; calY--; } if(calM > 11){ calM = 0; calY++; } saveUi(); renderCalendar(); }
 function calToday(){ calY = new Date().getFullYear(); calM = new Date().getMonth(); saveUi(); renderCalendar(); }
-function renderCalendar(){
+function renderCalendarMonth(){
   const tasks = mode === "me" ? S.tasks.filter(t => assigneeIds(t).includes(me.memberId)) : S.tasks;
   const byDay = {};
   tasks.filter(t => t.deadline).forEach(t => (byDay[t.deadline] = byDay[t.deadline] || []).push(t));
@@ -1998,7 +2274,7 @@ function renderCalendar(){
   document.getElementById("calContainer").innerHTML = `
     <div class="cal-nav">
       <button class="cal-nav-btn" onclick="calMove(-1)">‹ 前月</button>
-      <span class="cal-month-label">${calY}年${calM + 1}月 <button class="mini-link" onclick="calToday()">今月</button></span>
+      <span class="cal-month-label">${calY}年${calM + 1}月 <button class="mini-link" onclick="calToday()">今月</button>${calViewToggle()}</span>
       <button class="cal-nav-btn" onclick="calMove(1)">次月 ›</button>
     </div>
     <p class="muted-text" style="margin-bottom:8px;">${mode === "me" ? "自分が担当するタスクの締切" : "全タスクの締切"}とミーティングを表示しています（紫＝ミーティング／緑＝完了／赤＝期限超過／濃い緑＝優先度 高）。</p>
@@ -2010,6 +2286,7 @@ function renderCalendar(){
 
 /* ---------- メンバー ---------- */
 function renderMembers(){
+  renderSettings();
   const memberEmails = new Set(S.members.map(m => (m.email || "").toLowerCase()));
   const pending = Object.entries(S.allowed || {}).filter(([k, e]) => !memberEmails.has(String(e).toLowerCase()));
   document.getElementById("pendingInvites").innerHTML = pending.length
@@ -2067,6 +2344,7 @@ let memoTimer = null, memoDirty = false;
 function memoPath(){ return mode === "all" ? P("sharedMemo") : PRIVATE(me.user.uid, "memo"); }
 function attachMemo(){
   detachMemo();
+  if(mode === "all" && !memoCollab.failed){ attachCollabMemo(); return; }
   const ta = document.getElementById("memoContent");
   document.getElementById("memoLabel").textContent = mode === "all"
     ? "チーム共有のメモです。書いた内容は他のメンバーの画面にもすぐ反映されます。"
@@ -2079,8 +2357,9 @@ function attachMemo(){
     document.getElementById("memoStatus").textContent = "保存済み";
   });
 }
-function detachMemo(){ if(memoUnsub){ memoUnsub(); memoUnsub = null; } }
+function detachMemo(){ if(memoUnsub){ memoUnsub(); memoUnsub = null; } detachCollabMemo(); }
 document.getElementById("memoContent").addEventListener("input", () => {
+  if(mode === "all" && !memoCollab.failed) return;
   memoDirty = true;
   document.getElementById("memoStatus").textContent = "編集中...";
   const path = memoPath();
@@ -2204,7 +2483,7 @@ function renderTaskFlow(){
       <div class="chip-led"></div>
       <div class="flow-node-content">
         <div class="ft-title">${esc(t.title)}</div>
-        <div class="ft-meta">${prioBadge(t)} 📅 ${fmtDate(t.deadline)} ・ ${esc(derivedStatus(t))}</div>
+        <div class="ft-meta">${prioBadge(t)} 📅 ${fmtDate(t.deadline)} ・ ${esc(derivedStatus(t))} ${dueChip(t)}</div>
         <div class="ft-meta">👤 ${assigneeLabel(t)}</div>
       </div>
       <div class="flow-resize-handle" onpointerdown="resizeDown(event,'${t.id}')">⌟</div>
@@ -2479,7 +2758,7 @@ function fmtStamp(ts){
 }
 const nl2br = (s) => esc(s).replace(/\n/g, "<br>");
 function projectOptions(selected, emptyLabel = "プロジェクトなし"){
-  return `<option value="">${emptyLabel}</option>` + S.projects.map(p => `<option value="${p.id}" ${p.id === selected ? "selected" : ""}>${esc(p.name)}</option>`).join("");
+  return `<option value="">${emptyLabel}</option>` + sortProjects(S.projects).map(p => `<option value="${p.id}" ${p.id === selected ? "selected" : ""}>${esc(p.name)}</option>`).join("");
 }
 
 function refreshExtraModals(){
@@ -2517,7 +2796,7 @@ function renderIdeas(){
   document.getElementById("ideaTabs").innerHTML = ["", ...IDEA_STATUSES].map(s =>
     `<button class="${ideaUi.status === s ? "active" : ""}" onclick="setIdeaStatusFilter('${s}')">${s || "すべて"} <span class="cnt">${counts[s]}</span></button>`).join("");
   const ps = document.getElementById("ideaProject");
-  ps.innerHTML = `<option value="">全プロジェクト</option><option value="__none__">プロジェクトなし</option>` + S.projects.map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("");
+  ps.innerHTML = `<option value="">全プロジェクト</option><option value="__none__">プロジェクトなし</option>` + sortProjects(S.projects).map(p => `<option value="${p.id}">${esc(p.name)}</option>`).join("");
   ps.value = ideaUi.project; if(ps.value !== ideaUi.project){ ideaUi.project = ""; ps.value = ""; }
   document.getElementById("ideaSort").value = ideaUi.sort;
 
@@ -3028,12 +3307,18 @@ async function uploadDoc(name, html, folderId){
 function minutesHtml(m){
   const att = meetingAttendees(m).map(memberName);
   const items = agendaItems(m);
-  const cell = 'style="border:1px solid #c8d0dc;padding:6px 10px;"';
-  const th = 'style="border:1px solid #c8d0dc;padding:6px 10px;background:#eef3fb;font-weight:bold;width:90px;"';
-  const row = (k, v) => `<tr><td ${th}>${esc(k)}</td><td ${cell}>${v}</td></tr>`;
+  const F = "font-family:Arial,'Noto Sans JP',sans-serif;";
+  const cell = `style="border:1px solid #c8d0dc;padding:5px 9px;font-size:10.5pt;${F}"`;
+  const th = (w) => `style="border:1px solid #c8d0dc;padding:5px 9px;background:#eef3fb;font-weight:bold;font-size:10.5pt;${w ? "width:" + w + ";" : ""}${F}"`;
+  const row = (k, v) => `<tr><td ${th("90px")}>${esc(k)}</td><td ${cell}>${v}</td></tr>`;
+  const sp = `<p style="margin:0;font-size:6pt;">&nbsp;</p>`;
+  const H2 = (t) => `${sp}<h2 style="font-size:13pt;font-weight:bold;color:#1e3a6e;margin:16pt 0 6pt;${F}">${t}</h2>`;
+  const H3 = (t) => `<h3 style="font-size:11pt;font-weight:bold;color:#334155;margin:10pt 0 3pt;${F}">${t}</h3>`;
+  const P = (t, extra = "") => `<p style="font-size:10.5pt;line-height:1.6;margin:2pt 0;${extra}${F}">${t}</p>`;
+  const LI = (t) => `<li style="font-size:10.5pt;line-height:1.6;margin:2pt 0;${F}">${t}</li>`;
   return `<html><head><meta charset="utf-8"></head><body>
-<p style="color:#5b6b82;font-size:10pt;">Creatal fff ・ 議事録</p>
-<h1>${esc(m.title)}</h1>
+${P("Creatal fff ・ 議事録", "color:#5b6b82;font-size:9pt;")}
+<h1 style="font-size:17pt;font-weight:bold;margin:2pt 0 10pt;${F}">${esc(m.title)}</h1>
 <table style="border-collapse:collapse;width:100%;">
 ${row("日時", esc(meetingWhen(m)))}
 ${row("場所", esc(m.place || "—"))}
@@ -3041,19 +3326,19 @@ ${row("参加者", esc(att.join("、") || "—"))}
 ${m.projectId ? row("プロジェクト", esc(projectName(m.projectId))) : ""}
 ${row("記録者", "")}
 </table>
-<h2>アジェンダ</h2>
-<ol>${items.length ? items.map(a => `<li>${esc(a.text)}${a.owner || a.minutes ? `（${[a.owner ? "担当：" + esc(memberName(a.owner)) : "", a.minutes ? a.minutes + "分" : ""].filter(Boolean).join("・")}）` : ""}</li>`).join("") : "<li></li>"}</ol>
-<h2>議事メモ</h2>
-${items.length ? items.map((a, n) => `<h3>${n + 1}. ${esc(a.text)}</h3>${a.note ? `<p style="color:#5b6b82;">${nl2br(a.note)}</p>` : ""}<ul><li></li></ul>`).join("") : "<ul><li></li></ul>"}
-<h2>決定事項</h2>
-<ul><li>${m.notes ? nl2br(m.notes) : ""}</li></ul>
-<h2>宿題（次回までにやること）</h2>
+${H2("アジェンダ")}
+<ol>${items.length ? items.map(a => LI(`${esc(a.text)}${a.owner || a.minutes ? `（${[a.owner ? "担当：" + esc(memberName(a.owner)) : "", a.minutes ? a.minutes + "分" : ""].filter(Boolean).join("・")}）` : ""}`)).join("") : LI("")}</ol>
+${H2("議事メモ")}
+${items.length ? items.map((a, n) => `${H3(`${n + 1}. ${esc(a.text)}`)}${a.note ? P(nl2br(a.note), "color:#5b6b82;") : ""}<ul>${LI("")}</ul>`).join("") : `<ul>${LI("")}</ul>`}
+${H2("決定事項")}
+<ul>${LI(m.notes ? nl2br(m.notes) : "")}</ul>
+${H2("宿題（次回までにやること）")}
 <table style="border-collapse:collapse;width:100%;">
-<tr><td ${th.replace("width:90px;", "")}>やること</td><td ${th.replace("width:90px;", "")}>担当</td><td ${th.replace("width:90px;", "")}>期限</td></tr>
+<tr><td ${th()}>やること</td><td ${th("120px")}>担当</td><td ${th("110px")}>期限</td></tr>
 ${[1, 2, 3].map(() => `<tr><td ${cell}>&nbsp;</td><td ${cell}>&nbsp;</td><td ${cell}>&nbsp;</td></tr>`).join("")}
 </table>
-<h2>次回</h2>
-<p>日時：　　　　　場所：</p>
+${H2("次回")}
+${P("日時：　　　　　　場所：")}
 </body></html>`;
 }
 
@@ -3161,7 +3446,7 @@ async function saveProjectOrder(visibleIds){
   list.addEventListener("pointerdown", e => {
     if(e.button > 0) return;
     const card = e.target.closest(".project-card");
-    if(!card || !card.dataset.pid) return;
+    if(!card || !card.dataset.pid || e.target.closest(".pj-tasks,.pj-add")) return;
     st = { card, pid: card.dataset.pid, x0: e.clientX, y0: e.clientY, x: e.clientX, y: e.clientY,
            touch: e.pointerType !== "mouse", active: false, timer: null };
     if(st.touch){
@@ -3269,281 +3554,6 @@ async function saveProjectOrder(visibleIds){
     document.body.classList.remove("proj-dragging");
     st = null; projDragActive = false;
   }
-})();
-
-/* =====================================================================
- * ラウンジ（雑談チャット＋アプリ内通話）
- * ===================================================================== */
-const REACTS = { like: "👍", lol: "😂", wow: "😮", heart: "❤️", ok: "🙆", thanks: "🙏" };
-const imgCache = new Map();
-let chatMaxAt = null, chatOpenActions = null, sendingImg = false;
-
-/* ---------- 効果音・通知 ---------- */
-let audioCtx = null;
-document.addEventListener("pointerdown", () => {
-  try{
-    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    else if(audioCtx.state === "suspended") audioCtx.resume();
-  }catch(e){}
-}, { capture: true });
-function beep(kind){
-  if(!audioCtx || audioCtx.state !== "running") return;
-  const notes = kind === "call" ? [[660, 0], [880, .2], [660, .4], [880, .6]] : [[880, 0], [1175, .1]];
-  const t0 = audioCtx.currentTime;
-  notes.forEach(([f, t]) => {
-    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-    o.type = "sine"; o.frequency.value = f;
-    g.gain.setValueAtTime(0.0001, t0 + t);
-    g.gain.exponentialRampToValueAtTime(0.18, t0 + t + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0001, t0 + t + 0.17);
-    o.connect(g); g.connect(audioCtx.destination);
-    o.start(t0 + t); o.stop(t0 + t + 0.2);
-  });
-}
-function osNotify(title, body){
-  try{
-    if(!("Notification" in window) || Notification.permission !== "granted") return;
-    const n = new Notification(title, { body, tag: "creatal-fff-" + title });
-    n.onclick = () => { window.focus(); switchTab("lounge"); n.close(); };
-  }catch(e){}
-}
-async function enableChatNotif(){
-  if(!("Notification" in window)){
-    notice("この端末のブラウザは通知に対応していません。iPhone / iPad の場合は、Safari の共有ボタンから「ホーム画面に追加」して、ホーム画面のアイコンから開くと使えるようになります。");
-    return;
-  }
-  const p = await Notification.requestPermission();
-  toast(p === "granted" ? "通知をオンにしました" : "通知が許可されませんでした");
-  renderLoungeHead();
-}
-
-/* ---------- 未読 ---------- */
-const chatReadKey = () => "fff_chat_read_" + (me.memberId || "");
-function chatUnread(){
-  const last = lsGet(chatReadKey(), 0);
-  return S.chat.filter(m => m.by !== me.memberId && (m.at || 0) > last).length;
-}
-function markChatRead(){
-  if(!S.chat.length || document.hidden || currentTab !== "lounge") return;
-  const mx = Math.max(...S.chat.map(m => m.at || 0));
-  if(mx > lsGet(chatReadKey(), 0)){ lsSet(chatReadKey(), mx); updateLoungeBadge(); }
-}
-function updateLoungeBadge(){
-  const n = me.memberId ? chatUnread() : 0;
-  const b = document.querySelector('#mainNav button[data-tab="lounge"]');
-  if(b){
-    let s = b.querySelector(".nav-badge");
-    if(n){ if(!s){ s = document.createElement("span"); s.className = "nav-badge"; b.appendChild(s); } s.textContent = n > 99 ? "99+" : n; }
-    else if(s) s.remove();
-  }
-  document.title = (n ? `(${n}) ` : "") + "Creatal fff";
-}
-document.addEventListener("visibilitychange", () => { if(!document.hidden && currentTab === "lounge") markChatRead(); });
-
-/* チャットのデータが届くたびに呼ばれる */
-function onChatData(){
-  const mx = S.chat.reduce((a, m) => Math.max(a, m.at || 0), 0);
-  if(chatMaxAt !== null){
-    const fresh = S.chat.filter(m => (m.at || 0) > chatMaxAt && m.by !== me.memberId);
-    const looking = currentTab === "lounge" && !document.hidden;
-    if(fresh.length && !looking){
-      beep("msg");
-      const m = fresh[fresh.length - 1];
-      osNotify(`${memberName(m.by)}（Creatal fff）`, m.text || "画像を送信しました");
-    }
-  }
-  chatMaxAt = mx;
-  updateLoungeBadge();
-}
-
-/* ---------- 描画 ---------- */
-function renderLounge(){
-  renderLoungeHead();
-  renderChat();
-  renderCallPanel();
-  markChatRead();
-}
-function renderLoungeHead(){
-  const b = document.getElementById("chatNotifBtn");
-  const on = "Notification" in window && Notification.permission === "granted";
-  b.textContent = on ? "🔔 通知オン" : "🔕 通知をオンにする";
-  b.disabled = on;
-}
-function linkify(s){
-  return nl2br(s).replace(/(https?:\/\/[^\s<]+)/g, u => `<a href="${u}" target="_blank" rel="noopener">${u}</a>`);
-}
-function dayLabel(ts){
-  const d = new Date(ts), ds = dateStr(d), t = todayStr();
-  if(ds === t) return "今日";
-  if(ds === addDays(t, -1)) return "昨日";
-  return `${d.getFullYear() !== new Date().getFullYear() ? d.getFullYear() + "年" : ""}${d.getMonth() + 1}月${d.getDate()}日（${WD[d.getDay()]}）`;
-}
-function renderChat(){
-  const sc = document.getElementById("chatScroll");
-  const atBottom = sc.scrollHeight - sc.scrollTop - sc.clientHeight < 80;
-  const prevTop = sc.scrollTop;
-  const msgs = S.chat.slice().sort((a, b) => (a.at || 0) - (b.at || 0)).slice(-300);
-  let html = "", lastDay = "", lastBy = null, lastAt = 0;
-  msgs.forEach(m => {
-    const day = dateStr(new Date(m.at || 0));
-    if(day !== lastDay){ html += `<div class="day-sep"><span>${dayLabel(m.at)}</span></div>`; lastDay = day; lastBy = null; }
-    const mine = m.by === me.memberId;
-    const cont = lastBy === m.by && (m.at - lastAt) < 5 * 60000;
-    lastBy = m.by; lastAt = m.at;
-    const reacts = Object.entries(m.reactions || {}).map(([k, who]) => {
-      const ids = Object.keys(who || {}).filter(x => who[x]);
-      if(!ids.length || !REACTS[k]) return "";
-      return `<button class="react-chip ${ids.includes(me.memberId) ? "on" : ""}" onclick="toggleReact('${m.id}','${k}')" title="${esc(ids.map(memberName).join("、"))}">${REACTS[k]} ${ids.length}</button>`;
-    }).join("");
-    const d = new Date(m.at || 0);
-    html += `<div class="msg ${mine ? "mine" : ""} ${cont ? "cont" : ""} ${chatOpenActions === m.id ? "show-actions" : ""}" data-id="${m.id}">
-      ${!mine && !cont ? `<div class="msg-author"><span class="msg-av">${esc(memberName(m.by).charAt(0))}</span>${esc(memberName(m.by))}</div>` : ""}
-      <div class="msg-row">
-        <div class="bubble" onclick="toggleMsgActions('${m.id}', event)">
-          ${m.hasImage ? `<img class="chat-img" data-img="${m.id}" src="${imgCache.get(m.id) || ""}" alt="画像" onclick="event.stopPropagation();openLightbox('${m.id}')">` : ""}
-          ${m.text ? `<div class="msg-text">${linkify(m.text)}</div>` : ""}
-        </div>
-        <span class="msg-time">${pad(d.getHours())}:${pad(d.getMinutes())}</span>
-      </div>
-      ${reacts ? `<div class="msg-reacts">${reacts}</div>` : ""}
-      <div class="msg-actions">
-        ${Object.entries(REACTS).map(([k, e]) => `<button onclick="toggleReact('${m.id}','${k}')" title="リアクション">${e}</button>`).join("")}
-        <span class="sep"></span>
-        <button onclick="chatToIdea('${m.id}')" title="アイデアにする">💡 アイデア</button>
-        <button onclick="chatToTask('${m.id}')" title="タスクにする">✅ タスク</button>
-        ${mine ? `<button onclick="deleteChat('${m.id}')" title="削除">🗑</button>` : ""}
-      </div>
-    </div>`;
-  });
-  document.getElementById("chatList").innerHTML = html || `<div class="empty chat-empty">まだメッセージはありません。<br>気軽に話しかけてみましょう 👋</div>`;
-  loadChatImages();
-  if(atBottom || renderChat._first !== false){ sc.scrollTop = sc.scrollHeight; renderChat._first = false; }
-  else sc.scrollTop = prevTop;
-}
-async function loadChatImages(){
-  const els = [...document.querySelectorAll("img.chat-img")].filter(el => !el.getAttribute("src"));
-  for(const el of els){
-    const id = el.dataset.img;
-    try{
-      let src = imgCache.get(id);
-      if(!src){ src = await Store.get(P("chatImages/" + id)); if(src) imgCache.set(id, src); }
-      if(src){
-        const sc = document.getElementById("chatScroll");
-        const atBottom = sc.scrollHeight - sc.scrollTop - sc.clientHeight < 80;
-        document.querySelectorAll(`img.chat-img[data-img="${id}"]`).forEach(x => x.src = src);
-        if(atBottom) el.addEventListener("load", () => { sc.scrollTop = sc.scrollHeight; }, { once: true });
-      }
-    }catch(e){ console.warn(e); }
-  }
-}
-function toggleMsgActions(id, ev){
-  if(ev && ev.target.closest("a")) return;
-  chatOpenActions = chatOpenActions === id ? null : id;
-  document.querySelectorAll(".msg.show-actions").forEach(x => x.classList.remove("show-actions"));
-  if(chatOpenActions){ const el = document.querySelector(`.msg[data-id="${id}"]`); if(el) el.classList.add("show-actions"); }
-}
-function openLightbox(id){
-  const src = imgCache.get(id); if(!src) return;
-  document.getElementById("lightboxImg").src = src;
-  document.getElementById("lightbox").classList.add("active");
-}
-
-/* ---------- 送信・操作 ---------- */
-async function sendChat(){
-  const ta = document.getElementById("chatText");
-  const text = ta.value.trim(); if(!text) return;
-  const m = { id: uid(), by: me.memberId, text, at: Date.now() };
-  ta.value = ""; autoGrow(ta);
-  await write(() => Store.set(P("chat/" + m.id), m), "送信に失敗しました");
-  document.getElementById("chatScroll").scrollTop = 1e9;
-}
-async function sendChatImage(file){
-  if(!file || !/^image\//.test(file.type) || sendingImg) return;
-  sendingImg = true; toast("画像を送信しています…");
-  try{
-    const data = await compressImage(file);
-    const ta = document.getElementById("chatText");
-    const text = ta.value.trim();
-    const m = { id: uid(), by: me.memberId, text, at: Date.now(), hasImage: true };
-    imgCache.set(m.id, data);
-    ta.value = ""; autoGrow(ta);
-    await Store.set(P("chatImages/" + m.id), data);
-    await Store.set(P("chat/" + m.id), clean(m));
-    document.getElementById("chatScroll").scrollTop = 1e9;
-  }catch(e){ console.error(e); notice("画像を送れませんでした：" + (e.message || e)); }
-  finally{ sendingImg = false; }
-}
-function compressImage(file){
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const img = new Image();
-    img.onload = () => {
-      URL.revokeObjectURL(url);
-      const make = (max, q) => {
-        const k = Math.min(1, max / Math.max(img.width, img.height));
-        const c = document.createElement("canvas");
-        c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
-        const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height);
-        g.drawImage(img, 0, 0, c.width, c.height);
-        return c.toDataURL("image/jpeg", q);
-      };
-      let d = make(1280, .8);
-      if(d.length > 700000) d = make(1024, .7);
-      if(d.length > 700000) d = make(800, .6);
-      resolve(d);
-    };
-    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("画像を読み込めませんでした")); };
-    img.src = url;
-  });
-}
-async function toggleReact(id, k){
-  const m = S.chat.find(x => x.id === id); if(!m) return;
-  const on = !!(m.reactions && m.reactions[k] && m.reactions[k][me.memberId]);
-  chatOpenActions = null;
-  await write(() => Store.set(P(`chat/${id}/reactions/${k}/${me.memberId}`), on ? null : true));
-}
-async function deleteChat(id){
-  if(!await ask("このメッセージを削除しますか？", { ok: "削除する", danger: true })) return;
-  chatOpenActions = null;
-  await write(() => Store.update(ROOT, { ["chat/" + id]: null, ["chatImages/" + id]: null }));
-}
-async function chatToIdea(id){
-  const m = S.chat.find(x => x.id === id); if(!m) return;
-  const text = (m.text || "").trim() || "（画像のアイデア）";
-  const first = text.split("\n")[0];
-  const title = first.length > 60 ? first.slice(0, 58) + "…" : first;
-  const i = { id: uid(), title, body: text !== title ? text : "", status: "アイデア", projectId: "",
-              createdBy: m.by, createdAt: Date.now(), updatedAt: Date.now() };
-  chatOpenActions = null;
-  await write(() => Store.set(P("ideas/" + i.id), clean(i)));
-  renderChat();
-  toast("アイデアに追加しました（アイデアタブで確認できます）");
-}
-function chatToTask(id){
-  const m = S.chat.find(x => x.id === id); if(!m) return;
-  chatOpenActions = null; renderChat();
-  const first = (m.text || "").split("\n")[0];
-  openTaskModal(null);
-  document.getElementById("tTitle").value = first.slice(0, 80);
-  document.getElementById("tNote").value = `ラウンジより（${memberName(m.by)}・${fmtStamp(m.at)}）\n${m.text || ""}`;
-}
-function autoGrow(ta){ ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 160) + "px"; }
-
-(function(){
-  const ta = document.getElementById("chatText");
-  ta.addEventListener("keydown", e => {
-    if(e.key === "Enter" && !e.shiftKey && !e.isComposing && e.keyCode !== 229){ e.preventDefault(); sendChat(); }
-  });
-  ta.addEventListener("input", () => autoGrow(ta));
-  ta.addEventListener("paste", e => {
-    const f = [...(e.clipboardData && e.clipboardData.files || [])].find(x => /^image\//.test(x.type));
-    if(f){ e.preventDefault(); sendChatImage(f); }
-  });
-  document.getElementById("chatFile").addEventListener("change", e => { sendChatImage(e.target.files[0]); e.target.value = ""; });
-  const sc = document.getElementById("chatScroll");
-  sc.addEventListener("dragover", e => { e.preventDefault(); });
-  sc.addEventListener("drop", e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if(f) sendChatImage(f); });
-  document.getElementById("lightbox").addEventListener("click", () => document.getElementById("lightbox").classList.remove("active"));
 })();
 
 /* =====================================================================
@@ -3685,6 +3695,7 @@ async function joinCall(withVideo){
     return;
   }
   call.joined = true; call.joining = false; call.startedAt = Date.now();
+  if(!callOthers().length) pushTo(S.members.map(x => x.id), "📞 通話が始まりました", `${memberName(me.memberId)} さんが通話を始めました。ラウンジから参加できます`, "lounge");
   call.seen = new Set(); call.queue = Promise.resolve(); call.pendingIce = {};
   call.val = { name: memberName(me.memberId), memberId: me.memberId, joinedAt: Date.now(), video: !!withVideo, muted: false };
   await Store.remove(P(`call/signals/${me.memberId}`)).catch(() => {});
@@ -3834,6 +3845,1442 @@ function renderCallMini(){
 window.addEventListener("pagehide", () => { if(call.joined) leaveCall(true); });
 
 /* =====================================================================
+ * 効果音・アプリ内通知
+ * ===================================================================== */
+let audioCtx = null;
+document.addEventListener("pointerdown", () => {
+  try{
+    if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if(audioCtx.state === "suspended") audioCtx.resume();
+  }catch(e){}
+}, { capture: true });
+function beep(kind){
+  try{
+    if(!audioCtx) return;
+    if(audioCtx.state === "suspended") audioCtx.resume();
+    const notes = kind === "call" ? [[660, 0], [880, .2], [660, .4], [880, .6]] : [[880, 0], [1175, .1]];
+    const t0 = audioCtx.currentTime + 0.02;
+    notes.forEach(([f, t]) => {
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = "sine"; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t0 + t);
+      g.gain.exponentialRampToValueAtTime(0.18, t0 + t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + t + 0.17);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(t0 + t); o.stop(t0 + t + 0.2);
+    });
+  }catch(e){}
+}
+function osNotify(title, body, tab){
+  try{
+    if(!("Notification" in window) || Notification.permission !== "granted") return;
+    const opts = { body, tag: "creatal-fff-" + (tab || "x") + "-" + Date.now() };
+    const show = () => {
+      const n = new Notification(title, opts);
+      n.onclick = () => { window.focus(); if(tab) switchTab(tab); n.close(); };
+    };
+    // スマホ（ホーム画面アプリ）では Service Worker 経由でないと出ないことがある
+    if(navigator.serviceWorker && navigator.serviceWorker.getRegistration){
+      navigator.serviceWorker.getRegistration().then(r => { if(r && r.showNotification) r.showNotification(title, opts); else show(); }).catch(show);
+    }else show();
+  }catch(e){}
+}
+
+/* =====================================================================
+ * チャット（ラウンジの各トーク・各タスク共通）
+ * ===================================================================== */
+const MAIN_CH = "main";
+const QUICK_REACTS = ["👍", "😂", "😮", "❤️", "🙏", "🎉"];
+const LEGACY_REACT = { like: "👍", lol: "😂", wow: "😮", heart: "❤️", ok: "🙆", thanks: "🙏" };
+const EMOJI_SET = "👍 👏 🙌 🙏 💪 👌 ✌️ 🤝 🫶 😀 😆 😂 🤣 😊 🥹 😍 🥰 😎 🤔 🫡 😮 😳 😢 😭 😅 😱 😴 🥳 🤩 🙆 🙅 🙇 ❤️ 🧡 💛 💚 💙 💜 🔥 ✨ 🎉 💯 ✅ ❌ ⭐ 💡 📌 👀 🍀 ☕ 🍙 🚀".split(" ");
+const FILE_MAX = 5 * 1024 * 1024;
+const MONA_SVG = `<svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" class="mona">
+  <rect x="0.8" y="0.8" width="22.4" height="22.4" rx="2.4" fill="#b8892b"/><rect x="2.6" y="2.6" width="18.8" height="18.8" rx=".6" fill="#55603d"/>
+  <path d="M2.6 12.6 Q7 9.6 11.5 11.6 T21.4 10.6 V21.4 H2.6Z" fill="#7d7b52" opacity=".75"/>
+  <path d="M5.6 21.4 C5.8 15.6 8.4 13.4 12 13.4 C15.6 13.4 18.2 15.6 18.4 21.4Z" fill="#2a2216"/>
+  <path d="M8 11.6 C7.8 6.8 9.4 4.3 12 4.3 C14.6 4.3 16.2 6.8 16 11.6 C15.8 13.8 14.5 14.8 12 14.8 C9.5 14.8 8.2 13.8 8 11.6Z" fill="#1c160e"/>
+  <ellipse cx="12" cy="9.5" rx="2.6" ry="3.35" fill="#e3b979"/>
+  <path d="M10.2 8.8h1.1M12.7 8.8h1.1" stroke="#5a3a1a" stroke-width=".55" stroke-linecap="round"/>
+  <path d="M10.9 11.35 Q12 12 13.1 11.35" stroke="#8a5a2b" stroke-width=".5" fill="none" stroke-linecap="round"/>
+  <path d="M10.4 14.5 Q12 15.9 13.6 14.5 L13.9 15.6 Q12 17 10.1 15.6Z" fill="#c99a62"/>
+  <path d="M9.2 18.7 Q12 17.5 14.8 18.7 Q12 20 9.2 18.7Z" fill="#e3b979"/></svg>`;
+const isTouchDevice = () => window.matchMedia && matchMedia("(hover: none) and (pointer: coarse)").matches;
+const msgPath = (cid) => cid === MAIN_CH ? "chat" : "chats/" + cid;
+const taskCh = (tid) => "t_" + tid;
+const isTaskCh = (cid) => !!cid && cid.startsWith("t_");
+const reactKey = (e) => "e" + [...e].map(c => c.codePointAt(0).toString(16)).join("_");
+function reactEmoji(k){
+  if(LEGACY_REACT[k]) return LEGACY_REACT[k];
+  if(k[0] !== "e") return null;
+  try{ return String.fromCodePoint(...k.slice(1).split("_").map(h => parseInt(h, 16))); }catch(e){ return null; }
+}
+const imgCache = new Map();
+const fmtSize = (n) => n >= 1048576 ? (n / 1048576).toFixed(1) + "MB" : Math.max(1, Math.round(n / 1024)) + "KB";
+function autoGrow(ta){ ta.style.height = "auto"; ta.style.height = Math.min(ta.scrollHeight, 180) + "px"; }
+const sortMsgs = (l) => l.filter(m => m && m.id).sort((a, b) => (a.at || 0) - (b.at || 0));
+function chMsgs(cid){ return S.chatMsgs[cid] || []; }
+function chName(cid){
+  if(cid === MAIN_CH) return "雑談";
+  if(isTaskCh(cid)){ const t = S.tasks.find(x => x.id === cid.slice(2)); return t ? `タスク「${t.title}」` : "タスク"; }
+  const c = S.channels.find(x => x.id === cid); return c ? c.name : "トーク";
+}
+function msgPreview(m){
+  if(m.text) return m.text.length > 80 ? m.text.slice(0, 78) + "…" : m.text;
+  if(m.file) return m.file.image ? "🖼 画像" : "📎 " + m.file.name;
+  return m.hasImage ? "🖼 画像" : "";
+}
+
+/* ---------- データの受け取り ---------- */
+const chatInit = { main: false, chats: false };
+let chatBaseline = 0;
+function onChatSource(which, v){
+  const before = new Set();
+  if(which === "main") S.chatMsgs[MAIN_CH] = sortMsgs(arr(v));
+  else{
+    const all = v || {};
+    Object.keys(S.chatMsgs).forEach(k => { if(k !== MAIN_CH && !all[k]) delete S.chatMsgs[k]; });
+    Object.entries(all).forEach(([cid, obj]) => S.chatMsgs[cid] = sortMsgs(arr(obj)));
+  }
+  const pairs = which === "main"
+    ? chMsgs(MAIN_CH).map(m => [MAIN_CH, m])
+    : Object.entries(S.chatMsgs).filter(([k]) => k !== MAIN_CH).flatMap(([cid, ms]) => ms.map(m => [cid, m]));
+  const mx = pairs.reduce((a, [, m]) => Math.max(a, m.at || 0), 0);
+  if(!chatInit[which]){ chatInit[which] = true; chatBaseline = Math.max(chatBaseline, mx); }
+  else{
+    const fresh = pairs.filter(([cid, m]) => (m.at || 0) > chatBaseline && m.by !== me.memberId && !chatVisible(cid));
+    if(fresh.length){
+      beep("msg");
+      const [cid, m] = fresh[fresh.length - 1];
+      if(!osSubscribed()) osNotify(`${memberName(m.by)}（${chName(cid)}）`, msgPreview(m), isTaskCh(cid) ? (mode === "me" ? "myTasks" : "tasks") : "lounge");
+    }
+    chatBaseline = Math.max(chatBaseline, mx);
+  }
+  ChatView.all.forEach(vw => { if(vw.cid && vw.isShown()){ vw.render(); if(chatVisible(vw.cid)) markRead(vw.cid); } });
+  updateNavBadges();
+  if(currentTab === "lounge" || currentTab === "tasks" || currentTab === "myTasks" || currentTab === "projects") scheduleRender();
+}
+function onChatRead(v){
+  S.chatRead = v || {};
+  ChatView.all.forEach(vw => { if(vw.cid && vw.isShown()) vw.render(); });
+  updateNavBadges();
+}
+function chatVisible(cid){
+  if(document.hidden) return false;
+  if(currentTab === "lounge" && lounge.cid === cid && !lounge.collapsed) return true;
+  return !!(taskChat.view && taskChat.view.cid === cid && document.getElementById("taskModal").classList.contains("active"));
+}
+
+/* ---------- 既読・未読 ---------- */
+function readAt(cid, mid){ return (S.chatRead[cid] || {})[mid] || 0; }
+function myRead(cid){
+  const r = readAt(cid, me.memberId);
+  return cid === MAIN_CH ? Math.max(r, lsGet("fff_chat_read_" + me.memberId, 0)) : r;
+}
+function unreadOf(cid){
+  if(!me.memberId) return 0;
+  const r = myRead(cid);
+  return chMsgs(cid).filter(m => m.by !== me.memberId && (m.at || 0) > r).length;
+}
+function markRead(cid){
+  const ms = chMsgs(cid); if(!ms.length || !me.memberId) return;
+  const mx = ms[ms.length - 1].at || 0;
+  if(mx <= readAt(cid, me.memberId)) return;
+  S.chatRead[cid] = { ...(S.chatRead[cid] || {}), [me.memberId]: mx };
+  Store.set(P(`chatRead/${cid}/${me.memberId}`), mx).catch(() => {});
+  updateNavBadges();
+}
+function taskChatUnread(t){ return unreadOf(taskCh(t.id)); }
+function chatBadge(t){
+  const n = chMsgs(taskCh(t.id)).length; if(!n) return "";
+  const u = taskChatUnread(t);
+  return ` <span class="tc-badge ${u ? "unread" : ""}" title="${u ? "未読のチャット" : "チャット"}">💬${u || n}</span>`;
+}
+function setNavBadge(tab, n){
+  const b = document.querySelector(`#mainNav button[data-tab="${tab}"]`); if(!b) return;
+  let s = b.querySelector(".nav-badge");
+  if(n){ if(!s){ s = document.createElement("span"); s.className = "nav-badge"; b.appendChild(s); } s.textContent = n === true ? "●" : (n > 99 ? "99+" : n); s.classList.toggle("dot", n === true); }
+  else if(s) s.remove();
+}
+function updateNavBadges(){
+  if(!me.memberId) return;
+  const lu = loungeChannels().reduce((s, c) => s + unreadOf(c.id), 0);
+  const tu = S.tasks.reduce((s, t) => s + taskChatUnread(t), 0);
+  const myTu = S.tasks.filter(t => assigneeIds(t).includes(me.memberId)).reduce((s, t) => s + taskChatUnread(t), 0);
+  setNavBadge("lounge", lu); setNavBadge("tasks", tu); setNavBadge("myTasks", myTu);
+  setNavBadge("memo", typeof memoUnseen === "function" && memoUnseen() ? true : 0);
+  const total = lu + (mode === "me" ? myTu : tu);
+  document.title = (total ? `(${total}) ` : "") + "Creatal fff";
+}
+const updateLoungeBadge = updateNavBadges;
+document.addEventListener("visibilitychange", () => {
+  if(document.hidden) return;
+  ChatView.all.forEach(vw => { if(vw.cid && chatVisible(vw.cid)) markRead(vw.cid); });
+});
+
+/* ---------- 送信 ---------- */
+async function postMessage(cid, m){
+  await write(() => Store.set(P(msgPath(cid) + "/" + m.id), clean(m)), "送信に失敗しました");
+  markRead(cid);
+  let to;
+  if(isTaskCh(cid)){
+    const t = S.tasks.find(x => x.id === cid.slice(2));
+    to = new Set([...(t ? assigneeIds(t) : []), t && t.createdBy, ...chMsgs(cid).map(x => x.by)].filter(Boolean));
+    if(![...to].some(id => id !== me.memberId)) to = new Set(S.members.map(x => x.id));
+  }else to = new Set(S.members.map(x => x.id));
+  pushTo([...to], `${memberName(me.memberId)}（${chName(cid)}）`, msgPreview(m), isTaskCh(cid) ? "tasks" : "lounge");
+}
+function readAsDataURL(file){
+  return new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(r.error || new Error("読み込めませんでした")); r.readAsDataURL(file); });
+}
+function compressImage(file){
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const make = (max, q) => {
+        const k = Math.min(1, max / Math.max(img.width, img.height));
+        const c = document.createElement("canvas");
+        c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+        const g = c.getContext("2d"); g.fillStyle = "#fff"; g.fillRect(0, 0, c.width, c.height);
+        g.drawImage(img, 0, 0, c.width, c.height);
+        return c.toDataURL("image/jpeg", q);
+      };
+      let d = make(1600, .82);
+      if(d.length > 900000) d = make(1280, .75);
+      if(d.length > 900000) d = make(960, .65);
+      resolve(d);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("この画像は読み込めませんでした")); };
+    img.src = url;
+  });
+}
+async function getFileData(key){
+  if(imgCache.has(key)) return imgCache.get(key);
+  let d = null;
+  if(key.startsWith("f:")){ const f = await Store.get(P("files/" + key.slice(2))); d = f && f.data; }
+  else d = await Store.get(P("chatImages/" + key.slice(2)));
+  if(d) imgCache.set(key, d);
+  return d;
+}
+async function downloadFile(fid, name){
+  try{
+    toast("ファイルを準備しています…");
+    const f = await Store.get(P("files/" + fid));
+    if(!f || !f.data){ toast("ファイルが見つかりません"); return; }
+    const blob = await (await fetch(f.data)).blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = f.name || name || "file";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 15000);
+  }catch(e){ notice("ダウンロードできませんでした：" + (e.message || e)); }
+}
+function openLightbox(src){
+  if(!src) return;
+  document.getElementById("lightboxImg").src = src;
+  document.getElementById("lightbox").classList.add("active");
+}
+
+/* ---------- 画面（ChatView） ---------- */
+class ChatView {
+  constructor(host, opts = {}){
+    this.host = host; this.opts = opts; this.cid = null; this.stick = true;
+    this.replyTo = null; this.editId = null; this.lastPtr = "mouse";
+    ChatView.all.push(this);
+    host.innerHTML = `<div class="cv ${opts.compact ? "compact" : ""}">
+      <div class="cv-scroll"><div class="cv-list"></div></div>
+      <div class="cv-bar" hidden><span class="cv-bar-text"></span><button type="button" class="cv-bar-x" title="やめる">✕</button></div>
+      <div class="cv-input">
+        <button type="button" class="cv-attach" title="写真・ファイルを送る">${MONA_SVG}</button>
+        <textarea rows="1"></textarea>
+        <button type="button" class="btn cv-send">送信</button>
+        <input type="file" class="cv-f-img" accept="image/*" multiple hidden>
+        <input type="file" class="cv-f-any" multiple hidden>
+      </div></div>`;
+    const $ = (s) => host.querySelector(s);
+    this.scroll = $(".cv-scroll"); this.list = $(".cv-list"); this.ta = $("textarea");
+    this.bar = $(".cv-bar"); this.barText = $(".cv-bar-text");
+    this.ta.placeholder = isTouchDevice() ? "メッセージを入力" : "メッセージ（Enterで改行／Shift+Enterで送信）";
+    this.scroll.addEventListener("scroll", () => {
+      this.stick = this.scroll.scrollHeight - this.scroll.scrollTop - this.scroll.clientHeight < 60;
+    }, { passive: true });
+    this.ta.addEventListener("keydown", e => {
+      if(e.key === "Enter" && e.shiftKey && !e.isComposing && e.keyCode !== 229){ e.preventDefault(); this.send(); }
+      else if(e.key === "Escape" && (this.replyTo || this.editId)){ e.preventDefault(); this.cancelBar(); }
+    });
+    this.ta.addEventListener("input", () => autoGrow(this.ta));
+    this.ta.addEventListener("paste", e => {
+      const fs = [...((e.clipboardData && e.clipboardData.files) || [])];
+      if(fs.length){ e.preventDefault(); fs.forEach(f => this.sendFile(f, /^image\//.test(f.type))); }
+    });
+    $(".cv-send").addEventListener("click", () => this.send());
+    $(".cv-attach").addEventListener("click", e => { e.stopPropagation(); openAttachMenu(this, e.currentTarget); });
+    $(".cv-f-img").addEventListener("change", e => { [...e.target.files].forEach(f => this.sendFile(f, true)); e.target.value = ""; });
+    $(".cv-f-any").addEventListener("change", e => { [...e.target.files].forEach(f => this.sendFile(f, false)); e.target.value = ""; });
+    $(".cv-bar-x").addEventListener("click", () => this.cancelBar());
+    this.scroll.addEventListener("dragover", e => e.preventDefault());
+    this.scroll.addEventListener("drop", e => { e.preventDefault(); [...e.dataTransfer.files].forEach(f => this.sendFile(f, /^image\//.test(f.type))); });
+    this.list.addEventListener("pointerdown", e => { this.lastPtr = e.pointerType || "mouse"; });
+    this.list.addEventListener("contextmenu", e => {
+      const el = e.target.closest(".cv-msg"); if(!el) return;
+      if(e.target.closest("a")) return;
+      e.preventDefault();
+      openMsgMenu(this, el.dataset.id, e.clientX, e.clientY);
+    });
+    this.list.addEventListener("click", e => this.onClick(e));
+  }
+  isShown(){ return this.host.offsetParent !== null; }
+  setChannel(cid){
+    if(this.cid !== cid){ this.cancelBar(); this.ta.value = ""; autoGrow(this.ta); }
+    this.cid = cid; this.stick = true;
+    this.render();
+    requestAnimationFrame(() => { this.toBottom(); requestAnimationFrame(() => this.toBottom()); });
+  }
+  toBottom(){ this.scroll.scrollTop = this.scroll.scrollHeight; }
+  onClick(e){
+    const chip = e.target.closest(".cv-react");
+    if(chip){ toggleReaction(this.cid, chip.closest(".cv-msg").dataset.id, chip.dataset.e); return; }
+    const addR = e.target.closest(".cv-react-add");
+    if(addR){ const r = addR.getBoundingClientRect(); openEmojiPicker(this, addR.closest(".cv-msg").dataset.id, r.left, r.bottom); return; }
+    const q = e.target.closest(".cv-quote");
+    if(q){ this.jumpTo(q.dataset.jump); return; }
+    const img = e.target.closest(".cv-img");
+    if(img){ openLightbox(img.getAttribute("src")); return; }
+    const f = e.target.closest(".cv-file");
+    if(f){ downloadFile(f.dataset.fid, f.dataset.name); return; }
+    if(e.target.closest("a")) return;
+    const b = e.target.closest(".cv-bubble");
+    if(b && this.lastPtr !== "mouse"){
+      const r = b.getBoundingClientRect();
+      openMsgMenu(this, b.closest(".cv-msg").dataset.id, Math.min(r.left + 20, innerWidth - 20), r.bottom);
+    }
+  }
+  jumpTo(id){
+    const el = this.list.querySelector(`.cv-msg[data-id="${id}"]`); if(!el) { toast("元のメッセージが見つかりません"); return; }
+    el.scrollIntoView({ block: "center", behavior: "smooth" });
+    el.classList.add("flash"); setTimeout(() => el.classList.remove("flash"), 1500);
+  }
+  startReply(id){
+    const m = chMsgs(this.cid).find(x => x.id === id); if(!m) return;
+    this.editId = null; this.replyTo = id;
+    this.barText.innerHTML = `↩️ <b>${esc(memberName(m.by))}</b> さんに返信：${esc(msgPreview(m))}`;
+    this.bar.hidden = false; this.ta.focus();
+  }
+  startEdit(id){
+    const m = chMsgs(this.cid).find(x => x.id === id); if(!m) return;
+    this.replyTo = null; this.editId = id;
+    this.barText.innerHTML = `✏️ メッセージを編集しています（Shift+Enter または「送信」で保存）`;
+    this.bar.hidden = false; this.ta.value = m.text || ""; autoGrow(this.ta); this.ta.focus();
+  }
+  cancelBar(){
+    if(this.editId){ this.ta.value = ""; autoGrow(this.ta); }
+    this.replyTo = null; this.editId = null; this.bar.hidden = true;
+  }
+  async send(){
+    if(!this.cid) return;
+    const text = this.ta.value.trim();
+    if(this.editId){
+      if(!text){ toast("空のメッセージにはできません"); return; }
+      const id = this.editId; this.cancelBar();
+      await write(() => Store.update(P(msgPath(this.cid) + "/" + id), { text, editedAt: Date.now() }));
+      return;
+    }
+    if(!text) return;
+    const m = { id: uid(), by: me.memberId, text, at: Date.now(), replyTo: this.replyTo || null };
+    this.cancelBar(); this.ta.value = ""; autoGrow(this.ta); this.stick = true;
+    if(!isTouchDevice()) this.ta.focus();
+    await postMessage(this.cid, m);
+  }
+  async sendFile(file, asImage){
+    if(!file || !this.cid) return;
+    let isImg = asImage && /^image\//.test(file.type) && !/gif|svg/.test(file.type);
+    toast("送信しています…");
+    try{
+      let data = null;
+      if(isImg){ try{ data = await compressImage(file); }catch(e){ isImg = false; } }
+      if(!isImg){
+        if(file.size > FILE_MAX){ notice(`ファイルが大きすぎます（${fmtSize(file.size)}）。送れるのは5MBまでです。\n大きいファイルは Googleドライブなどに置いて、リンクを送ってください。`); return; }
+        data = await readAsDataURL(file);
+      }
+      const fid = uid();
+      const meta = { id: fid, name: file.name || (isImg ? "画像.jpg" : "ファイル"), type: isImg ? "image/jpeg" : (file.type || "application/octet-stream"),
+                     size: isImg ? Math.round(data.length * 0.75) : file.size, image: isImg };
+      if(isImg) imgCache.set("f:" + fid, data);
+      await Store.set(P("files/" + fid), { data, name: meta.name, type: meta.type, by: me.memberId, at: Date.now(), cid: this.cid });
+      const m = { id: uid(), by: me.memberId, text: "", at: Date.now(), file: meta, replyTo: this.replyTo || null };
+      if(!this.editId){ m.text = this.ta.value.trim(); this.ta.value = ""; autoGrow(this.ta); this.cancelBar(); }
+      this.stick = true;
+      await postMessage(this.cid, m);
+    }catch(e){ console.error(e); notice("送信できませんでした：" + (e.message || e)); }
+  }
+  render(){
+    if(!this.cid){ this.list.innerHTML = ""; return; }
+    const prevTop = this.scroll.scrollTop;
+    const all = chMsgs(this.cid), msgs = all.slice(-400);
+    const others = S.members.filter(x => x.id !== me.memberId);
+    let html = "", lastDay = "", lastBy = null, lastAt = 0;
+    msgs.forEach(m => {
+      const day = dateStr(new Date(m.at || 0));
+      if(day !== lastDay){ html += `<div class="cv-day"><span>${dayLabel(m.at)}</span></div>`; lastDay = day; lastBy = null; }
+      const mine = m.by === me.memberId;
+      const cont = lastBy === m.by && (m.at - lastAt) < 5 * 60000 && !m.replyTo;
+      lastBy = m.by; lastAt = m.at;
+      // リアクション（同じ絵文字をまとめる）
+      const byEmoji = {};
+      Object.entries(m.reactions || {}).forEach(([k, who]) => {
+        const em = reactEmoji(k); if(!em) return;
+        Object.keys(who || {}).filter(x => who[x] && memberById(x)).forEach(x => { (byEmoji[em] = byEmoji[em] || new Set()).add(x); });
+      });
+      const reacts = Object.entries(byEmoji).map(([em, set]) =>
+        `<button class="cv-react ${set.has(me.memberId) ? "on" : ""}" data-e="${em}" title="${esc([...set].map(memberName).join("、"))}">${em} ${set.size}</button>`).join("");
+      let quote = "";
+      if(m.replyTo){
+        const r = all.find(x => x.id === m.replyTo);
+        quote = `<div class="cv-quote" data-jump="${esc(m.replyTo)}">${r ? `<b>${esc(memberName(r.by))}</b> ${esc(msgPreview(r))}` : "（削除されたメッセージ）"}</div>`;
+      }
+      let file = "";
+      if(m.file && m.file.image || m.hasImage){
+        const key = m.file ? "f:" + m.file.id : "l:" + m.id;
+        file = `<img class="cv-img" data-key="${key}" src="${imgCache.get(key) || ""}" alt="画像">`;
+      }else if(m.file){
+        file = `<button class="cv-file" data-fid="${m.file.id}" data-name="${esc(m.file.name)}"><span class="fi">📄</span><span class="fn">${esc(m.file.name)}</span><small>${fmtSize(m.file.size || 0)}・タップで保存</small></button>`;
+      }
+      let read = "";
+      if(mine && others.length){
+        const readers = others.filter(o => readAt(this.cid, o.id) >= (m.at || 0));
+        if(readers.length) read = `<span class="cv-read" title="${esc(readers.map(x => x.name).join("、"))}">既読${others.length > 1 ? " " + readers.length : ""}</span>`;
+      }
+      const tags = [
+        m.ideaId && S.ideas.some(i => i.id === m.ideaId) ? `<span>💡 アイデア化済み</span>` : "",
+        m.taskId && S.tasks.some(t => t.id === m.taskId) ? `<span>✅ タスク化済み</span>` : ""
+      ].join("");
+      const d = new Date(m.at || 0);
+      html += `<div class="cv-msg ${mine ? "mine" : ""} ${cont ? "cont" : ""}" data-id="${m.id}">
+        ${!mine && !cont ? `<div class="cv-author"><span class="cv-av">${esc(memberName(m.by).charAt(0))}</span>${esc(memberName(m.by))}</div>` : ""}
+        <div class="cv-row">
+          <div class="cv-bubble">${quote}${file}${m.text ? `<div class="cv-text">${linkify(m.text)}</div>` : ""}${m.editedAt ? `<span class="cv-edited">（編集済み）</span>` : ""}</div>
+          <div class="cv-side">${read}<span class="cv-time">${pad(d.getHours())}:${pad(d.getMinutes())}</span></div>
+        </div>
+        ${reacts ? `<div class="cv-reacts">${reacts}<button class="cv-react-add" title="リアクションを追加">＋</button></div>` : ""}
+        ${tags ? `<div class="cv-tags">${tags}</div>` : ""}
+      </div>`;
+    });
+    this.list.innerHTML = html || `<div class="cv-empty">${isTaskCh(this.cid) ? "このタスクについて、ここで相談できます 💬" : "まだメッセージはありません。<br>気軽に話しかけてみましょう 👋"}</div>`;
+    this.loadImages();
+    if(this.stick) this.toBottom(); else this.scroll.scrollTop = prevTop;
+  }
+  async loadImages(){
+    const els = [...this.list.querySelectorAll("img.cv-img")].filter(el => !el.getAttribute("src"));
+    for(const el of els){
+      try{
+        const src = await getFileData(el.dataset.key);
+        if(src){
+          el.addEventListener("load", () => { if(this.stick) this.toBottom(); }, { once: true });
+          el.src = src;
+        }
+      }catch(e){ console.warn(e); }
+    }
+  }
+}
+ChatView.all = [];
+function linkify(s){
+  return nl2br(s).replace(/(https?:\/\/[^\s<]+)/g, u => `<a href="${u}" target="_blank" rel="noopener">${u}</a>`);
+}
+function dayLabel(ts){
+  const d = new Date(ts), ds = dateStr(d), t = todayStr();
+  if(ds === t) return "今日";
+  if(ds === addDays(t, -1)) return "昨日";
+  return `${d.getFullYear() !== new Date().getFullYear() ? d.getFullYear() + "年" : ""}${d.getMonth() + 1}月${d.getDate()}日（${WD[d.getDay()]}）`;
+}
+
+/* ---------- メニュー（右クリック／タップ） ---------- */
+let menuCtx = null;
+function placePopup(el, x, y){
+  el.style.display = "block"; el.style.left = "0px"; el.style.top = "0px";
+  const w = el.offsetWidth, h = el.offsetHeight;
+  const left = Math.max(8, Math.min(x, innerWidth - w - 8));
+  let top = y + 6; if(top + h > innerHeight - 8) top = Math.max(8, y - h - 6);
+  el.style.left = left + "px"; el.style.top = top + "px";
+}
+function closePopups(){
+  ["msgMenu", "emojiPicker", "attachMenu", "onlinePop"].forEach(id => { const el = document.getElementById(id); if(el) el.style.display = "none"; });
+  menuCtx = null;
+}
+document.addEventListener("pointerdown", e => {
+  if(e.target.closest("#msgMenu,#emojiPicker,#attachMenu,#onlinePop,.online-pill")) return;
+  closePopups();
+});
+document.addEventListener("keydown", e => { if(e.key === "Escape") closePopups(); });
+window.addEventListener("resize", closePopups);
+
+function openMsgMenu(view, id, x, y){
+  const m = chMsgs(view.cid).find(z => z.id === id); if(!m) return;
+  closePopups();
+  menuCtx = { view, id };
+  const mine = m.by === me.memberId;
+  const ideaOn = m.ideaId && S.ideas.some(i => i.id === m.ideaId);
+  const taskOn = m.taskId && S.tasks.some(t => t.id === m.taskId);
+  const el = document.getElementById("msgMenu");
+  el.innerHTML = `
+    <div class="mm-reacts">${QUICK_REACTS.map(e => `<button data-r="${e}">${e}</button>`).join("")}<button class="mm-more" title="ほかの絵文字">＋</button></div>
+    <div class="mm-acts">
+      <button data-a="reply">↩️ 返信</button>
+      ${mine && m.text ? `<button data-a="edit">✏️ 編集</button>` : ""}
+      ${m.text ? `<button data-a="copy">📋 コピー</button>` : ""}
+      <button data-a="idea">${ideaOn ? "💡 アイデア化を解除" : "💡 アイデアにする"}</button>
+      ${!isTaskCh(view.cid) ? `<button data-a="task">${taskOn ? "✅ タスク化を解除" : "✅ タスクにする"}</button>` : ""}
+      ${mine ? `<button data-a="del" class="danger">🗑 削除</button>` : ""}
+    </div>`;
+  el.onclick = async (e) => {
+    const ctx = menuCtx; if(!ctx) return;
+    const r = e.target.closest("[data-r]"), a = e.target.closest("[data-a]");
+    if(e.target.closest(".mm-more")){ const rect = el.getBoundingClientRect(); closePopups(); openEmojiPicker(ctx.view, ctx.id, rect.left, rect.top); return; }
+    if(r){ closePopups(); toggleReaction(ctx.view.cid, ctx.id, r.dataset.r); return; }
+    if(!a) return;
+    closePopups();
+    const msg = chMsgs(ctx.view.cid).find(z => z.id === ctx.id); if(!msg) return;
+    switch(a.dataset.a){
+      case "reply": ctx.view.startReply(ctx.id); break;
+      case "edit": ctx.view.startEdit(ctx.id); break;
+      case "copy": try{ await navigator.clipboard.writeText(msg.text); toast("コピーしました"); }catch(err){ toast("コピーできませんでした"); } break;
+      case "idea": toggleMsgIdea(ctx.view.cid, msg); break;
+      case "task": toggleMsgTask(ctx.view.cid, msg); break;
+      case "del": deleteMsg(ctx.view.cid, msg); break;
+    }
+  };
+  placePopup(el, x, y);
+}
+function openEmojiPicker(view, id, x, y){
+  closePopups();
+  menuCtx = { view, id };
+  const el = document.getElementById("emojiPicker");
+  el.innerHTML = `<div class="ep-grid">${EMOJI_SET.map(e => `<button data-r="${e}">${e}</button>`).join("")}</div>
+    <div class="ep-custom"><input type="text" placeholder="ほかの絵文字を入力" maxlength="8" aria-label="絵文字"><button class="btn small">付ける</button></div>`;
+  const inp = el.querySelector("input");
+  const useCustom = () => {
+    const v = inp.value.trim(); if(!v) return;
+    const seg = window.Intl && Intl.Segmenter ? [...new Intl.Segmenter("ja", { granularity: "grapheme" }).segment(v)][0].segment : [...v][0];
+    const ctx = menuCtx; closePopups(); if(ctx) toggleReaction(ctx.view.cid, ctx.id, seg);
+  };
+  el.onclick = (e) => {
+    const r = e.target.closest("[data-r]");
+    if(r){ const ctx = menuCtx; closePopups(); if(ctx) toggleReaction(ctx.view.cid, ctx.id, r.dataset.r); }
+    else if(e.target.closest(".ep-custom .btn")) useCustom();
+  };
+  inp.addEventListener("keydown", e => { if(e.key === "Enter" && !e.isComposing){ e.preventDefault(); useCustom(); } });
+  placePopup(el, x, y);
+}
+function openAttachMenu(view, btn){
+  closePopups();
+  const el = document.getElementById("attachMenu");
+  el.innerHTML = `<button data-k="img">🖼 写真を送る</button><button data-k="any">📎 ファイルを送る <small>（5MBまで）</small></button>`;
+  el.onclick = (e) => {
+    const b = e.target.closest("[data-k]"); if(!b) return;
+    closePopups();
+    view.host.querySelector(b.dataset.k === "img" ? ".cv-f-img" : ".cv-f-any").click();
+  };
+  const r = btn.getBoundingClientRect();
+  placePopup(el, r.left, r.top - 4);
+  if(parseFloat(el.style.top) > r.top) el.style.top = (r.top - el.offsetHeight - 6) + "px";
+}
+
+/* ---------- メッセージの操作 ---------- */
+async function toggleReaction(cid, id, emoji){
+  const m = chMsgs(cid).find(x => x.id === id); if(!m || !emoji) return;
+  const upd = {};
+  let had = false;
+  Object.entries(m.reactions || {}).forEach(([k, who]) => {
+    if(reactEmoji(k) === emoji && who && who[me.memberId]){ had = true; upd[`${k}/${me.memberId}`] = null; }
+  });
+  if(!had) upd[`${reactKey(emoji)}/${me.memberId}`] = true;
+  await write(() => Store.update(P(msgPath(cid) + "/" + id + "/reactions"), upd));
+}
+async function deleteMsg(cid, m){
+  if(!await ask("このメッセージを削除しますか？", { ok: "削除する", danger: true })) return;
+  const upd = { [msgPath(cid) + "/" + m.id]: null };
+  if(m.file) upd["files/" + m.file.id] = null;
+  if(m.hasImage) upd["chatImages/" + m.id] = null;
+  await write(() => Store.update(ROOT, upd));
+}
+async function toggleMsgIdea(cid, m){
+  const path = P(msgPath(cid) + "/" + m.id);
+  if(m.ideaId && S.ideas.some(i => i.id === m.ideaId)){
+    await write(() => Store.update(ROOT, { ["ideas/" + m.ideaId]: null, [msgPath(cid) + "/" + m.id + "/ideaId"]: null }));
+    toast("アイデア化を解除しました");
+    return;
+  }
+  const text = (m.text || "").trim() || (m.file ? m.file.name : "（画像のアイデア）");
+  const first = text.split("\n")[0];
+  const title = first.length > 60 ? first.slice(0, 58) + "…" : first;
+  const i = { id: uid(), title, body: text !== title ? text : "", status: "アイデア",
+              projectId: isTaskCh(cid) ? ((S.tasks.find(t => t.id === cid.slice(2)) || {}).projectId || "") : "",
+              createdBy: m.by, createdAt: Date.now(), updatedAt: Date.now() };
+  await write(() => Store.update(ROOT, clean({ ["ideas/" + i.id]: i, [msgPath(cid) + "/" + m.id + "/ideaId"]: i.id })));
+  toast("アイデアに追加しました（もう一度押すと解除できます）");
+}
+let pendingChatTaskLink = null;
+async function toggleMsgTask(cid, m){
+  if(m.taskId && S.tasks.some(t => t.id === m.taskId)){
+    const id = m.taskId;
+    const upd = { ["tasks/" + id]: null, [msgPath(cid) + "/" + m.id + "/taskId"]: null, ["chats/" + taskCh(id)]: null };
+    S.tasks.filter(t => arr(t.dependsOn).includes(id)).forEach(t => upd[`tasks/${t.id}/dependsOn`] = arr(t.dependsOn).filter(d => d !== id));
+    await write(() => Store.update(ROOT, upd));
+    toast("タスク化を解除しました");
+    return;
+  }
+  const first = (m.text || "").split("\n")[0] || (m.file ? m.file.name : "");
+  openTaskModal(null);
+  document.getElementById("tTitle").value = first.slice(0, 80);
+  document.getElementById("tNote").value = `${chName(cid)}より（${memberName(m.by)}・${fmtStamp(m.at)}）\n${m.text || ""}`.trim();
+  pendingChatTaskLink = { cid, id: m.id };
+}
+async function linkChatToTask(link, taskId){
+  await write(() => Store.update(P(msgPath(link.cid) + "/" + link.id), { taskId }));
+}
+
+/* =====================================================================
+ * ラウンジ
+ * ===================================================================== */
+const lounge = { cid: lsGet("fff_lounge_ch", MAIN_CH), collapsed: !!lsGet("fff_lounge_collapsed", false), view: null };
+function loungeChannels(){
+  return [{ id: MAIN_CH, name: "雑談" }, ...S.channels.slice().sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0))];
+}
+function renderLounge(){
+  if(!lounge.view) lounge.view = new ChatView(document.getElementById("loungeChatBody"));
+  const chs = loungeChannels();
+  if(!chs.some(c => c.id === lounge.cid)) lounge.cid = MAIN_CH;
+  document.getElementById("chList").innerHTML = chs.map(c => {
+    const u = unreadOf(c.id);
+    return `<button class="ch-item ${c.id === lounge.cid ? "on" : ""}" onclick="selectChannel('${c.id}')"><span class="ch-hash">#</span><span class="ch-name">${esc(c.name)}</span>${u ? `<span class="nav-badge">${u}</span>` : ""}</button>`;
+  }).join("") + `<button class="ch-add" onclick="openChannelModal()">＋ トークを追加</button>`;
+  const cur = chs.find(c => c.id === lounge.cid);
+  document.getElementById("loungeChName").textContent = "# " + cur.name;
+  document.getElementById("chEditBtn").style.display = lounge.cid === MAIN_CH ? "none" : "";
+  document.getElementById("loungeChat").classList.toggle("collapsed", lounge.collapsed);
+  document.getElementById("loungeChev").textContent = lounge.collapsed ? "▸" : "▾";
+  if(lounge.view.cid !== lounge.cid) lounge.view.setChannel(lounge.cid);
+  else lounge.view.render();
+  renderLoungeHead();
+  renderCallPanel();
+  if(chatVisible(lounge.cid)) markRead(lounge.cid);
+}
+function renderLoungeHead(){
+  const b = document.getElementById("chatNotifBtn"); if(!b) return;
+  const on = "Notification" in window && Notification.permission === "granted";
+  b.textContent = on ? (osSubscribed() ? "🔔 通知オン（閉じていても届く）" : "🔔 通知オン") : "🔕 通知をオンにする";
+}
+function selectChannel(cid){
+  lounge.cid = cid; lsSet("fff_lounge_ch", cid);
+  if(lounge.collapsed){ lounge.collapsed = false; lsSet("fff_lounge_collapsed", false); }
+  renderLounge();
+}
+function toggleLoungeCollapse(e){
+  if(e && e.target.closest("button")) return;
+  lounge.collapsed = !lounge.collapsed; lsSet("fff_lounge_collapsed", lounge.collapsed);
+  renderLounge();
+  if(!lounge.collapsed) requestAnimationFrame(() => lounge.view.toBottom());
+}
+function openChannelModal(id){
+  const c = id ? S.channels.find(x => x.id === id) : null;
+  document.getElementById("chId").value = id || "";
+  document.getElementById("chModalTitle").textContent = c ? "トークを編集" : "新しいトーク";
+  document.getElementById("chNameInput").value = c ? c.name : "";
+  document.getElementById("chDeleteBtn").style.display = c ? "" : "none";
+  openModal("channelModal");
+  setTimeout(() => document.getElementById("chNameInput").focus(), 50);
+}
+async function saveChannel(){
+  const name = document.getElementById("chNameInput").value.trim();
+  if(!name){ toast("トークの名前を入れてください"); return; }
+  const id = document.getElementById("chId").value;
+  const old = id ? S.channels.find(x => x.id === id) : null;
+  const rec = { ...(old || { id: "c" + uid(), createdBy: me.memberId, createdAt: Date.now() }), name };
+  closeModal("channelModal");
+  await write(() => Store.set(P("channels/" + rec.id), rec));
+  if(!old){ S.channels.push(rec); selectChannel(rec.id); }
+}
+async function deleteChannel(){
+  const id = document.getElementById("chId").value; if(!id) return;
+  const c = S.channels.find(x => x.id === id); if(!c) return;
+  if(!await ask(`トーク「${c.name}」を削除しますか？\nメッセージもすべて消えます。`, { ok: "削除する", danger: true })) return;
+  const upd = { ["channels/" + id]: null, ["chats/" + id]: null, ["chatRead/" + id]: null };
+  chMsgs(id).forEach(m => { if(m.file) upd["files/" + m.file.id] = null; });
+  closeModal("channelModal");
+  await write(() => Store.update(ROOT, upd));
+  if(lounge.cid === id) selectChannel(MAIN_CH);
+}
+
+/* =====================================================================
+ * タスクごとのチャット
+ * ===================================================================== */
+const taskChat = { view: null };
+function setupTaskChat(t){
+  const row = document.getElementById("tChatRow");
+  if(!t){ row.style.display = "none"; if(taskChat.view) taskChat.view.setChannel(null); return; }
+  row.style.display = "";
+  if(!taskChat.view) taskChat.view = new ChatView(document.getElementById("tChatBox"), { compact: true });
+  taskChat.view.setChannel(taskCh(t.id));
+  markRead(taskCh(t.id));
+}
+
+/* =====================================================================
+ * 共有メモ（同時編集：Yjs。相手のカーソル・入力中を表示）
+ * ===================================================================== */
+const memoCollab = {
+  Y: null, loading: null, failed: false, active: false, doc: null, text: null,
+  applied: new Set(), updateKeys: new Set(), snapKeys: new Set(), unsubs: [], stopPresence: null,
+  curVal: null, rel: null, others: {}, composing: false, pendingRemote: false, tick: null,
+  loaded: { u: false, s: false }, ready: false, compacting: false
+};
+let memoMeta = null, memoMetaSentAt = 0;
+function onMemoMeta(v){
+  memoMeta = v || null;
+  if(currentTab === "memo" && mode === "all") markMemoSeen();
+  updateNavBadges();
+}
+function memoUnseen(){
+  if(!memoMeta || !me.memberId || memoMeta.by === me.memberId) return false;
+  if(currentTab === "memo" && mode === "all") return false;
+  return (memoMeta.at || 0) > lsGet("fff_memo_seen_" + me.memberId, 0);
+}
+function markMemoSeen(){
+  if(memoMeta && me.memberId) lsSet("fff_memo_seen_" + me.memberId, memoMeta.at || Date.now());
+  updateNavBadges();
+}
+function sendMemoMeta(){
+  if(Date.now() - memoMetaSentAt < 2500) return;
+  memoMetaSentAt = Date.now();
+  Store.set(P("memoMeta"), { by: me.memberId, at: Date.now() }).catch(() => {});
+}
+
+const b64enc = (u8) => { let s = ""; for(let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
+const b64dec = (s) => { const bin = atob(s); const u = new Uint8Array(bin.length); for(let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u; };
+const CURSOR_COLORS = ["#e11d48", "#7c3aed", "#0891b2", "#ea580c", "#16a34a", "#db2777"];
+function memberColor(id){
+  let h = 7; for(const ch of String(id)) h = (h * 31 + ch.charCodeAt(0)) | 0;
+  return CURSOR_COLORS[Math.abs(h) % CURSOR_COLORS.length];
+}
+function loadYjs(){
+  if(memoCollab.Y) return Promise.resolve(memoCollab.Y);
+  if(!memoCollab.loading) memoCollab.loading = import("https://cdn.jsdelivr.net/npm/yjs@13.6.27/+esm").then(m => (memoCollab.Y = m));
+  return memoCollab.loading;
+}
+
+async function attachCollabMemo(){
+  detachCollabMemo();
+  const ta = document.getElementById("memoContent");
+  document.getElementById("memoLabel").textContent = "チーム共有のメモです。同時に書いても消えません。相手のカーソルの位置と「入力中」が表示されます。";
+  ta.placeholder = "チームで共有するメモを入力...";
+  ta.value = ""; ta.disabled = true;
+  document.getElementById("memoStatus").textContent = "読み込み中…";
+  let Y;
+  try{ Y = await loadYjs(); }
+  catch(e){ console.warn("yjs load failed", e); memoCollab.failed = true; ta.disabled = false; attachMemo(); return; }
+  if(currentTab !== "memo" || mode !== "all"){ ta.disabled = false; return; }
+  const c = memoCollab;
+  Object.assign(c, { active: true, applied: new Set(), updateKeys: new Set(), snapKeys: new Set(), loaded: { u: false, s: false }, ready: false, others: {} });
+  c.doc = new Y.Doc(); c.text = c.doc.getText("t");
+  c.doc.on("update", (u, origin) => {
+    if(origin === "remote") return;
+    const key = uid();
+    c.applied.add(key);
+    Store.set(P("memoDoc/updates/" + key), { u: b64enc(u), by: me.memberId, at: Date.now() })
+      .catch(e => { console.warn(e); document.getElementById("memoStatus").textContent = "保存に失敗しました（通信を確認してください）"; });
+    sendMemoMeta();
+    maybeCompactMemo();
+  });
+  c.text.observe(ev => { if(ev.transaction.origin !== "local") refreshMemoFromDoc(); });
+  const applyAll = (v, keysSet) => {
+    const keys = Object.keys(v || {}).sort();
+    keys.forEach(k => {
+      if(c.applied.has(k)) return;
+      c.applied.add(k);
+      try{ Y.applyUpdate(c.doc, b64dec(v[k].u), "remote"); }catch(e){ console.warn("memo update", e); }
+    });
+    keysSet.clear(); keys.forEach(k => keysSet.add(k));
+  };
+  c.unsubs.push(Store.listen(P("memoDoc/snaps"), v => { if(!c.doc) return; applyAll(v, c.snapKeys); c.loaded.s = true; memoReady(); }));
+  c.unsubs.push(Store.listen(P("memoDoc/updates"), v => {
+    if(!c.doc) return;
+    applyAll(v, c.updateKeys); c.loaded.u = true; memoReady();
+    if(currentTab === "memo") markMemoSeen();
+  }));
+  c.unsubs.push(Store.listen(P("memoCursors"), v => { c.others = v || {}; renderMemoCursors(); }));
+  c.curVal = { name: memberName(me.memberId), memberId: me.memberId, a: null, h: null, typing: 0 };
+  c.stopPresence = Store.presence(P("memoCursors/" + me.memberId), c.curVal);
+  clearInterval(c.tick); c.tick = setInterval(renderMemoCursors, 1000);
+  markMemoSeen();
+}
+async function memoReady(){
+  const c = memoCollab;
+  if(c.ready || !c.loaded.u || !c.loaded.s) return;
+  c.ready = true;
+  const ta = document.getElementById("memoContent");
+  // 以前の（同時編集に対応する前の）メモを引き継ぐ
+  if(!c.text.length && !c.updateKeys.size && !c.snapKeys.size){
+    try{
+      const legacy = await Store.get(P("sharedMemo"));
+      if(legacy && c.doc && !c.text.length) c.doc.transact(() => c.text.insert(0, String(legacy)), "local");
+    }catch(e){}
+  }
+  if(!c.doc) return;
+  ta.value = c.text.toString();
+  ta.disabled = false;
+  document.getElementById("memoStatus").textContent = "自動で保存されます";
+  renderMemoCursors();
+}
+function detachCollabMemo(){
+  const c = memoCollab;
+  c.unsubs.forEach(f => { try{ f(); }catch(e){} }); c.unsubs = [];
+  if(c.stopPresence){ try{ c.stopPresence(); }catch(e){} c.stopPresence = null; }
+  clearInterval(c.tick);
+  if(c.doc){ try{ c.doc.destroy(); }catch(e){} }
+  c.doc = null; c.text = null; c.active = false; c.ready = false;
+  const ta = document.getElementById("memoContent"); if(ta) ta.disabled = false;
+  const box = document.getElementById("memoCursors"); if(box) box.innerHTML = "";
+  const t = document.getElementById("memoTyping"); if(t) t.textContent = "";
+}
+function memoLocalInput(){
+  const c = memoCollab; if(!c.active || !c.doc || !c.ready) return;
+  const ta = document.getElementById("memoContent");
+  const a = c.text.toString(), b = ta.value;
+  if(a === b) return;
+  let s = 0; const m = Math.min(a.length, b.length);
+  while(s < m && a[s] === b[s]) s++;
+  let e1 = a.length, e2 = b.length;
+  while(e1 > s && e2 > s && a[e1 - 1] === b[e2 - 1]){ e1--; e2--; }
+  c.doc.transact(() => {
+    if(e1 > s) c.text.delete(s, e1 - s);
+    if(e2 > s) c.text.insert(s, b.slice(s, e2));
+  }, "local");
+  c.curVal.typing = Date.now();
+  sendMemoCursor(true);
+  document.getElementById("memoStatus").textContent = "自動で保存されます";
+}
+function captureMemoRel(){
+  const c = memoCollab, ta = document.getElementById("memoContent");
+  if(!c.text || !c.Y) return;
+  c.rel = { a: c.Y.createRelativePositionFromTypeIndex(c.text, ta.selectionStart), h: c.Y.createRelativePositionFromTypeIndex(c.text, ta.selectionEnd) };
+}
+function refreshMemoFromDoc(){
+  const c = memoCollab, ta = document.getElementById("memoContent");
+  if(!c.text) return;
+  if(c.composing){ c.pendingRemote = true; return; }
+  const val = c.text.toString();
+  if(ta.value !== val){
+    const focused = document.activeElement === ta, st = ta.scrollTop;
+    ta.value = val;
+    if(focused && c.rel){
+      const a = c.Y.createAbsolutePositionFromRelativePosition(c.rel.a, c.doc);
+      const h = c.Y.createAbsolutePositionFromRelativePosition(c.rel.h, c.doc);
+      if(a && h) ta.setSelectionRange(Math.min(a.index, h.index), Math.max(a.index, h.index));
+    }
+    ta.scrollTop = st;
+  }
+  renderMemoCursors();
+}
+let memoCurTimer = null;
+function sendMemoCursor(soon){
+  const c = memoCollab, ta = document.getElementById("memoContent");
+  if(!c.active || !c.ready || document.activeElement !== ta) return;
+  captureMemoRel();
+  clearTimeout(memoCurTimer);
+  memoCurTimer = setTimeout(() => {
+    if(!c.rel || !c.active) return;
+    const val = { a: c.Y.relativePositionToJSON(c.rel.a), h: c.Y.relativePositionToJSON(c.rel.h), typing: c.curVal.typing || 0, at: Date.now() };
+    Object.assign(c.curVal, val);
+    Store.update(P("memoCursors/" + me.memberId), clean(val)).catch(() => {});
+  }, soon ? 60 : 160);
+}
+let memoMirror = null;
+function caretXY(ta, index){
+  if(!memoMirror){ memoMirror = document.createElement("div"); memoMirror.className = "memo-mirror"; document.body.appendChild(memoMirror); }
+  const cs = getComputedStyle(ta);
+  ["fontFamily", "fontSize", "fontWeight", "fontStyle", "lineHeight", "letterSpacing", "wordSpacing", "textIndent", "tabSize",
+   "paddingTop", "paddingRight", "paddingBottom", "paddingLeft"].forEach(p => memoMirror.style[p] = cs[p]);
+  const pl = parseFloat(cs.paddingLeft), pr = parseFloat(cs.paddingRight);
+  memoMirror.style.width = (ta.clientWidth - pl - pr) + "px";
+  const text = ta.value;
+  memoMirror.textContent = text.slice(0, index);
+  const span = document.createElement("span");
+  span.textContent = text.slice(index, index + 1) || "​";
+  memoMirror.appendChild(span);
+  const bt = parseFloat(cs.borderTopWidth) || 0, bl = parseFloat(cs.borderLeftWidth) || 0;
+  const x = span.offsetLeft + bl, y = span.offsetTop + bt - ta.scrollTop;
+  const h = span.offsetHeight || parseFloat(cs.fontSize) * 1.5;
+  if(y < -2 || y > ta.clientHeight - 4) return null;
+  return { x, y, h };
+}
+function renderMemoCursors(){
+  const c = memoCollab, box = document.getElementById("memoCursors"), typingEl = document.getElementById("memoTyping");
+  if(!box) return;
+  if(!c.active || !c.ready){ box.innerHTML = ""; if(typingEl) typingEl.textContent = ""; return; }
+  const ta = document.getElementById("memoContent");
+  const now = Date.now(), html = [], typing = [];
+  Object.entries(c.others || {}).forEach(([mid, o]) => {
+    if(mid === me.memberId || !o || !memberById(mid)) return;
+    if(DEMO && now - (o.at || 0) > 60000) return;
+    if(o.typing && now - o.typing < 3500) typing.push(memberName(mid));
+    if(!o.a) return;
+    let pos = null;
+    try{ pos = c.Y.createAbsolutePositionFromRelativePosition(c.Y.createRelativePositionFromJSON(o.h || o.a), c.doc); }catch(e){}
+    if(!pos) return;
+    const xy = caretXY(ta, pos.index); if(!xy) return;
+    const col = memberColor(mid);
+    html.push(`<div class="mc" style="left:${xy.x}px;top:${xy.y}px;height:${xy.h}px;background:${col}"><span style="background:${col}">${esc(memberName(mid))}</span></div>`);
+  });
+  box.innerHTML = html.join("");
+  if(typingEl) typingEl.textContent = typing.length ? `✍️ ${typing.join("、")} さんが入力中…` : "";
+}
+function maybeCompactMemo(){
+  const c = memoCollab;
+  if(c.compacting || c.updateKeys.size < 120) return;
+  c.compacting = true;
+  setTimeout(async () => {
+    try{
+      if(!c.doc) return;
+      const ups = [...c.updateKeys].filter(k => c.applied.has(k));
+      const snaps = [...c.snapKeys].filter(k => c.applied.has(k));
+      const id = uid();
+      c.applied.add(id);
+      await Store.set(P("memoDoc/snaps/" + id), { u: b64enc(c.Y.encodeStateAsUpdate(c.doc)), by: me.memberId, at: Date.now() });
+      const upd = {};
+      ups.forEach(k => upd["updates/" + k] = null);
+      snaps.forEach(k => upd["snaps/" + k] = null);
+      if(Object.keys(upd).length) await Store.update(P("memoDoc"), upd);
+    }catch(e){ console.warn("memo compact", e); }
+    finally{ c.compacting = false; }
+  }, 1200);
+}
+(function(){
+  const ta = document.getElementById("memoContent");
+  ta.addEventListener("input", () => { if(memoCollab.active) memoLocalInput(); });
+  ta.addEventListener("compositionstart", () => { memoCollab.composing = true; });
+  ta.addEventListener("compositionend", () => {
+    memoCollab.composing = false;
+    if(memoCollab.active) memoLocalInput();
+    if(memoCollab.pendingRemote){ memoCollab.pendingRemote = false; refreshMemoFromDoc(); }
+  });
+  document.addEventListener("selectionchange", () => { if(memoCollab.active && document.activeElement === ta) sendMemoCursor(false); });
+  ta.addEventListener("blur", () => {
+    if(!memoCollab.active || !me.memberId) return;
+    memoCollab.curVal.a = null; memoCollab.curVal.h = null;
+    Store.update(P("memoCursors/" + me.memberId), { a: null, h: null }).catch(() => {});
+  });
+  ta.addEventListener("scroll", renderMemoCursors, { passive: true });
+  window.addEventListener("resize", renderMemoCursors);
+})();
+
+/* =====================================================================
+ * 締切まで「あと◯日」
+ * ===================================================================== */
+const SOON_DAYS = 3;
+function dueInfo(t){
+  if(!t || !t.deadline || !isOpen(t)) return null;
+  const d = daysUntil(t.deadline);
+  return { d, text: d < 0 ? `${-d}日超過` : d === 0 ? "今日まで" : `あと${d}日`, cls: d < 0 ? "late" : d <= SOON_DAYS ? "soon" : "" };
+}
+function dueChip(t){ const i = dueInfo(t); return i ? `<span class="due-chip ${i.cls}">${i.text}</span>` : ""; }
+
+/* =====================================================================
+ * プロジェクト（カード内でタスクを開く・＋で追加・締切の警告）
+ * ===================================================================== */
+const projOpen = lsGet("fff_proj_open", {});
+function toggleProjectCard(pid, e){
+  if(e && e.target.closest(".pj-name,.pj-add,.pj-tasks,button")) return;
+  projOpen[pid] = !projOpen[pid]; lsSet("fff_proj_open", projOpen);
+  renderProjects();
+}
+function projectTaskRows(p, ts){
+  if(!ts.length) return `<div class="pj-empty">まだタスクがありません。右下の「＋」から追加できます。</div>`;
+  const open = sortTasks(ts.filter(isOpen)), rest = sortTasks(ts.filter(t => !isOpen(t)));
+  return [...open, ...rest].map(t => {
+    const ds = derivedStatus(t), done = ds === "完了", cancelled = ds === "取りやめ";
+    const ids = assigneeIds(t);
+    return `<div class="pj-task ${done ? "done" : ""} ${cancelled ? "cancelled" : ""}" onclick="openTaskModal('${t.id}')">
+      <button class="pj-check ${done ? "on" : ""}" onclick="event.stopPropagation();quickToggleTask('${t.id}')" title="完了／未完了" ${cancelled ? "disabled" : ""}>✓</button>
+      <div class="pj-t-main"><div class="pj-t-title">${prioBadge(t)} ${esc(t.title)}${chatBadge(t)}</div>
+        <div class="pj-t-meta">${ids.length ? esc(ids.map(memberName).join("・")) : `<span class="unassigned">未割当</span>`}${t.deadline ? ` ・ ${fmtDate(t.deadline)}` : ""}</div></div>
+      ${dueChip(t)}
+    </div>`;
+  }).join("");
+}
+function quickToggleTask(id){
+  const t = S.tasks.find(x => x.id === id); if(!t) return;
+  const ids = assigneeIds(t);
+  if(ids.includes(me.memberId)) return toggleMemberStatus(id, me.memberId);
+  if(ids.length <= 1) return toggleMemberStatus(id, ids[0] || null);
+  openTaskModal(id);
+}
+function renderProjects(){
+  if(projDragActive){ projRenderPending = true; return; }
+  const list = visibleProjects();
+  const el = document.getElementById("projectList");
+  if(!list.length){
+    el.innerHTML = `<div class="empty">プロジェクトがありません。<br>「＋ 新規プロジェクト」から始めてください。</div>`;
+    return;
+  }
+  el.innerHTML = `<p class="muted-text sort-hint">${list.length > 1 ? "並べ替え：パソコンはドラッグ、スマホ・iPad は長押ししてから動かします。カードを押すとタスクが開きます。" : "カードを押すとタスクが開きます。"}</p><div class="project-grid">` + list.map(p => {
+    const ts = S.tasks.filter(t => t.projectId === p.id);
+    const openTs = ts.filter(isOpen);
+    const pct = projectProgress(p.id);
+    const late = openTs.filter(isOverdue).length;
+    const soon = openTs.filter(t => t.deadline && !isOverdue(t) && daysUntil(t.deadline) <= SOON_DAYS).length;
+    const alert = (late ? `<span class="pj-alert late">⚠ 期限超過のタスクが${late}件</span>` : "")
+      + (soon ? `<span class="pj-alert soon">⏰ 締切が近いタスクがあります（${soon}件）</span>` : "");
+    const members = arr(p.memberIds).filter(memberById).map(memberName).join("、") || "未割当";
+    const opened = !!projOpen[p.id];
+    return `
+      <div class="card project-card ${opened ? "expanded" : ""}" data-pid="${p.id}" onclick="toggleProjectCard('${p.id}', event)">
+        <div class="pj-top">
+          <h3 class="pj-name" onclick="event.stopPropagation();openProjectModal('${p.id}')" title="押すとプロジェクトを編集">${esc(p.name)}</h3>
+          ${alert}
+        </div>
+        ${p.description ? `<p class="muted-text desc">${esc(p.description)}</p>` : ""}
+        <div class="progress-bar" style="margin-bottom:10px;"><div style="width:${pct}%;"></div></div>
+        <div class="meta">✅ ${pct}% 完了（未完了 ${openTs.length} / 全 ${ts.length}件）</div>
+        <div class="meta">📅 ${p.start ? fmtDate(p.start) : "-"} 〜 ${p.end ? fmtDate(p.end) : "-"}${p.end && p.end >= todayStr() ? `（あと${daysUntil(p.end)}日）` : ""}</div>
+        <div class="meta">👤 作成者：${esc(p.createdBy ? memberName(p.createdBy) : "-")}</div>
+        <div class="meta">👥 ${esc(members)}</div>
+        ${opened ? `<div class="pj-tasks" onclick="event.stopPropagation()">${projectTaskRows(p, ts)}</div>` : ""}
+        <div class="pj-foot">
+          <span class="pj-toggle">${opened ? "▴ タスクを閉じる" : `▾ タスクを見る（未完了 ${openTs.length}件）`}</span>
+          <button class="pj-add" onclick="event.stopPropagation();openTaskModal(null,{projectId:'${p.id}'})" title="このプロジェクトにタスクを追加">＋</button>
+        </div>
+      </div>`;
+  }).join("") + `</div>`;
+}
+
+/* =====================================================================
+ * オンライン一覧
+ * ===================================================================== */
+function onlineMemberIds(){
+  const now = Date.now();
+  return new Set(Object.values(S.presence || {}).filter(p => p && (!DEMO || now - (p.at || 0) < 45000)).map(p => p.memberId));
+}
+function toggleOnlinePopover(e){
+  e.stopPropagation();
+  const el = document.getElementById("onlinePop");
+  if(el.style.display === "block"){ el.style.display = "none"; return; }
+  closePopups();
+  drawOnlinePopover();
+  const r = document.getElementById("onlinePill").getBoundingClientRect();
+  placePopup(el, r.left, r.bottom);
+}
+function drawOnlinePopover(){
+  const el = document.getElementById("onlinePop");
+  const on = onlineMemberIds();
+  const inCall = new Set(Object.keys(call.parts || {}));
+  const rows = S.members.slice().sort((a, b) => (on.has(b.id) - on.has(a.id)) || (a.joinedAt || 0) - (b.joinedAt || 0)).map(m =>
+    `<div class="op-row"><span class="op-dot ${on.has(m.id) ? "on" : ""}"></span><span>${esc(m.name)}${m.id === me.memberId ? "（あなた）" : ""}</span>${inCall.has(m.id) ? `<span class="muted-text">📞 通話中</span>` : ""}</div>`).join("");
+  el.innerHTML = `<div class="op-h">オンライン ${on.size}人 ／ メンバー ${S.members.length}人</div>${rows}`;
+}
+
+/* =====================================================================
+ * 起動の高速化（前回のデータをすぐ表示して、裏で最新に入れ替える）
+ * ===================================================================== */
+const CACHE_KEY = "fff_cache_v1";
+let cachedBoot = null, cacheTimer = null;
+function saveCacheSoon(){
+  if(DEMO || !me.user || !me.memberId) return;
+  clearTimeout(cacheTimer);
+  cacheTimer = setTimeout(() => {
+    try{
+      localStorage.setItem(CACHE_KEY, JSON.stringify({
+        email: me.user.email, uid: me.user.uid, photo: me.user.photo || "", memberId: me.memberId, at: Date.now(),
+        S: { members: S.members, projects: S.projects, tasks: S.tasks, flowNotes: S.flowNotes, ideas: S.ideas, meetings: S.meetings, channels: S.channels }
+      }));
+    }catch(e){}
+  }, 1500);
+}
+function bootFromCache(){
+  if(DEMO) return;
+  const c = lsGet(CACHE_KEY, null);
+  if(!c || !c.memberId || !c.S || !c.email) return;
+  const saved = lsGet("fff_mode", null);
+  if(saved !== "all" && saved !== "me") return;
+  Object.assign(S, c.S);
+  me.user = { email: c.email, uid: c.uid, name: "", photo: c.photo || "" };
+  me.memberId = c.memberId;
+  cachedBoot = c.email;
+  try{ hideGate(); hideLoading(); setMode(saved); }catch(e){ console.warn("cache boot", e); }
+}
+function clearBootCache(){ cachedBoot = null; try{ localStorage.removeItem(CACHE_KEY); }catch(e){} }
+
+/* =====================================================================
+ * カレンダー（締切・予定 ／ 取り組み期間＝ガント）
+ * ===================================================================== */
+let calView = lsGet("fff_cal_view", "month");
+function setCalView(v){ calView = v; lsSet("fff_cal_view", v); renderCalendar(); }
+function calViewToggle(){
+  return `<span class="cal-view-tg" role="tablist">
+    <button class="${calView === "month" ? "on" : ""}" onclick="setCalView('month')">📅 締切・予定</button>
+    <button class="${calView === "gantt" ? "on" : ""}" onclick="setCalView('gantt')">📊 取り組み期間</button></span>`;
+}
+function renderCalendar(){
+  if(calView === "gantt") renderGantt(); else renderCalendarMonth();
+  const box = document.getElementById("calContainer");
+  const chip = document.createElement("div");
+  chip.id = "gcalChip"; chip.className = "gcal-chip";
+  box.appendChild(chip);
+  renderGcalChip();
+}
+function renderGantt(){
+  const tasks = (mode === "me" ? S.tasks.filter(t => assigneeIds(t).includes(me.memberId)) : S.tasks).filter(t => t.status !== "取りやめ");
+  const first = new Date(calY, calM, 1), N = new Date(calY, calM + 1, 0).getDate();
+  const mStart = dateStr(first), mEnd = dateStr(new Date(calY, calM, N));
+  const today = todayStr();
+  const col = (ds) => parseDate(ds).getDate();
+  const inMonth = tasks.filter(t => {
+    const s = t.start || t.deadline, e = t.deadline || t.start;
+    return s && e && s <= mEnd && e >= mStart;
+  });
+  const groups = [];
+  const projs = sortProjects(S.projects);
+  projs.forEach(p => { const ts = inMonth.filter(t => t.projectId === p.id); if(ts.length) groups.push({ name: p.name, ts }); });
+  const none = inMonth.filter(t => !t.projectId || !S.projects.some(p => p.id === t.projectId));
+  if(none.length) groups.push({ name: "未分類", ts: none });
+  const days = Array.from({ length: N }, (_, i) => new Date(calY, calM, i + 1));
+  const cells = (extra = "") => days.map(d => {
+    const ds = dateStr(d), w = d.getDay();
+    return `<div class="g-cell ${w === 0 ? "sun" : w === 6 ? "sat" : ""} ${ds === today ? "today" : ""}" style="grid-column:${d.getDate() + 1}"${extra}></div>`;
+  }).join("");
+  const head = `<div class="g-row g-head"><div class="g-label">タスク</div>${days.map(d => {
+    const w = d.getDay(), ds = dateStr(d);
+    return `<div class="g-day ${w === 0 ? "sun" : w === 6 ? "sat" : ""} ${ds === today ? "today" : ""}" style="grid-column:${d.getDate() + 1}"><b>${d.getDate()}</b><small>${WD[w]}</small></div>`;
+  }).join("")}</div>`;
+  const ms = visibleMeetings().filter(m => m.date && m.date >= mStart && m.date <= mEnd);
+  const meetRow = ms.length ? `<div class="g-row"><div class="g-label g-meet-label">🗓 ミーティング</div>${cells()}${ms.map(m =>
+    `<button class="g-meet" style="grid-column:${col(m.date) + 1}" onclick="openMeeting('${m.id}')" title="${esc(m.title)}${m.start ? " " + m.start : ""}">●</button>`).join("")}</div>` : "";
+  const body = groups.map(g => `<div class="g-row g-group"><div class="g-label">${esc(g.name)}</div>${cells()}</div>` + sortTasks(g.ts).map(t => {
+    const s = t.start || t.deadline, e = t.deadline || t.start;
+    const cs = s < mStart ? 1 : col(s), ce = e > mEnd ? N : col(e);
+    const ds = derivedStatus(t);
+    const color = ds === "完了" ? "#16a34a" : isOverdue(t) ? "#dc2626" : prioOf(t) === "高" ? "var(--g2)" : "#64748b";
+    const milestone = !t.start || t.start === t.deadline;
+    const bar = milestone
+      ? `<button class="g-ms" style="grid-column:${ce + 1};--c:${color}" onclick="openTaskModal('${t.id}')" title="${esc(t.title)}（締切 ${fmtDate(t.deadline)}）">◆</button>`
+      : `<button class="g-bar ${s < mStart ? "cut-l" : ""} ${e > mEnd ? "cut-r" : ""}" style="grid-column:${cs + 1} / ${ce + 2};--c:${color}" onclick="openTaskModal('${t.id}')" title="${esc(t.title)}（${fmtDate(t.start)}〜${fmtDate(t.deadline)}）"><span>${esc(t.title)}</span></button>`;
+    return `<div class="g-row"><div class="g-label" onclick="openTaskModal('${t.id}')"><span class="g-t">${esc(t.title)}</span><small>${esc(assigneeIds(t).map(memberName).join("・") || "未割当")}</small></div>${cells()}${bar}</div>`;
+  }).join("")).join("");
+  document.getElementById("calContainer").innerHTML = `
+    <div class="cal-nav">
+      <button class="cal-nav-btn" onclick="calMove(-1)">‹ 前月</button>
+      <span class="cal-month-label">${calY}年${calM + 1}月 <button class="mini-link" onclick="calToday()">今月</button>${calViewToggle()}</span>
+      <button class="cal-nav-btn" onclick="calMove(1)">次月 ›</button>
+    </div>
+    <p class="muted-text" style="margin-bottom:8px;">タスクの「開始日〜締切」を帯で表示します（開始日がないものは締切に◆）。${mode === "me" ? "自分のタスクだけを表示中。" : ""}</p>
+    ${inMonth.length || ms.length ? `<div class="gantt-wrap"><div class="gantt" style="--n:${N}">${head}${meetRow}${body}</div></div>`
+      : `<div class="empty">この月に取り組むタスクはありません。<br>タスクに「開始日」と「締切」を入れると、ここに期間が表示されます。</div>`}`;
+}
+
+/* =====================================================================
+ * 通知（OneSignal：アプリを閉じていても届く）
+ * ===================================================================== */
+let osCfg = null;
+function osSubscribed(){ return !!(osCfg && osCfg.appId && lsGet("fff_os_on", false) && "Notification" in window && Notification.permission === "granted"); }
+function onOsConfig(v){
+  osCfg = v || null;
+  if(osCfg && osCfg.appId) initOneSignal();
+  renderHeader(); renderLoungeHead();
+  if(currentTab === "members") renderSettings();
+}
+function initOneSignal(){
+  if(window._osLoaded){ osLogin(); return; }
+  window._osLoaded = true;
+  window.OneSignalDeferred = window.OneSignalDeferred || [];
+  const dir = location.pathname.replace(/[^/]*$/, "");
+  OneSignalDeferred.push(async (OneSignal) => {
+    try{
+      await OneSignal.init({
+        appId: osCfg.appId,
+        serviceWorkerPath: dir.replace(/^\//, "") + "OneSignalSDKWorker.js",
+        serviceWorkerParam: { scope: dir },
+        notifyButton: { enable: false },
+        allowLocalhostAsSecureOrigin: true
+      });
+    }catch(e){ console.error("[OneSignal] init failed", e); }
+  });
+  osLogin();
+  loadScript("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js").catch(e => console.warn(e));
+}
+function osLogin(){
+  if(!me.memberId || !window.OneSignalDeferred) return;
+  OneSignalDeferred.push(async (OneSignal) => { try{ await OneSignal.login(me.memberId); }catch(e){ console.warn("[OneSignal] login", e); } });
+}
+function notifBellHtml(){
+  const on = "Notification" in window && Notification.permission === "granted";
+  return `<button class="icon-btn" onclick="${on ? "toggleNotifOff()" : "enableNotifications()"}" title="${on ? "通知オン（押すと設定）" : "通知をオンにする"}">${on ? "🔔" : "🔕"}</button>`;
+}
+async function enableNotifications(){
+  if(!("Notification" in window)){
+    notice("この端末のブラウザでは通知が使えません。\niPhone / iPad の場合は、Safari の共有ボタン →「ホーム画面に追加」をして、ホーム画面のアイコンから開くと使えるようになります。");
+    return;
+  }
+  const perm = await Notification.requestPermission();
+  if(perm !== "granted"){ notice("通知が許可されませんでした。ブラウザのアドレスバー横の設定から、このサイトの「通知」を「許可」にしてください。"); return; }
+  if(osCfg && osCfg.appId){
+    initOneSignal(); osLogin();
+    OneSignalDeferred.push(async (OneSignal) => { try{ await OneSignal.User.PushSubscription.optIn(); }catch(e){ console.warn(e); } });
+    lsSet("fff_os_on", true);
+    toast("通知をオンにしました（アプリを閉じていても届きます）");
+  }else{
+    toast("通知をオンにしました（アプリを開いている間）");
+  }
+  renderHeader(); renderLoungeHead();
+}
+async function toggleNotifOff(){
+  if(osSubscribed()){
+    if(!await ask("この端末への通知（アプリを閉じていても届く通知）をオフにしますか？", { ok: "オフにする" })) return;
+    OneSignalDeferred.push(async (OneSignal) => { try{ await OneSignal.User.PushSubscription.optOut(); }catch(e){} });
+    lsSet("fff_os_on", false); toast("通知をオフにしました");
+  }else if(osCfg && osCfg.appId){
+    enableNotifications(); return;
+  }else{
+    notice("アプリを開いている間の通知はオンになっています。\nアプリを閉じていても届くようにするには、「メンバー」タブの「通知の設定」で OneSignal を設定してください。");
+  }
+  renderHeader(); renderLoungeHead();
+}
+async function pushTo(ids, title, body, tab, includeSelf){
+  if(!osCfg || !osCfg.appId || !osCfg.apiKey) return false;
+  ids = [...new Set(ids)].filter(id => id && (includeSelf || id !== me.memberId) && memberById(id));
+  if(!ids.length) return false;
+  const base = location.href.split("#")[0].split("?")[0];
+  const url = base + (tab ? "#" + tab : "");
+  try{
+    const res = await fetch("https://api.onesignal.com/notifications?c=push", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Key " + osCfg.apiKey },
+      body: JSON.stringify({ app_id: osCfg.appId, target_channel: "push", include_aliases: { external_id: ids },
+        headings: { en: title, ja: title }, contents: { en: body || " ", ja: body || " " }, url })
+    });
+    if(res.ok) return true;
+    // 古い形式のAPIキー向け
+    const res2 = await fetch("https://onesignal.com/api/v1/notifications", {
+      method: "POST",
+      headers: { "Content-Type": "application/json; charset=utf-8", "Authorization": "Basic " + osCfg.apiKey },
+      body: JSON.stringify({ app_id: osCfg.appId, include_external_user_ids: ids, channel_for_external_user_ids: "push",
+        headings: { en: title, ja: title }, contents: { en: body || " ", ja: body || " " }, url })
+    });
+    return res2.ok;
+  }catch(e){ console.warn("[OneSignal] push failed", e); return false; }
+}
+function notifyAssigned(old, rec){
+  const prev = old ? arr(old.assigneeIds) : [];
+  const added = arr(rec.assigneeIds).filter(id => !prev.includes(id) && id !== me.memberId);
+  if(!added.length) return;
+  pushTo(added, "タスクが割り当てられました", `「${rec.title}」${rec.projectId ? `（${projectName(rec.projectId)}）` : ""}${rec.deadline ? ` 締切 ${fmtDate(rec.deadline)}` : ""}`, "myTasks");
+}
+async function saveOsConfig(){
+  const appId = document.getElementById("osAppId").value.trim();
+  const apiKey = document.getElementById("osApiKey").value.trim();
+  if(appId && !/^[0-9a-f-]{36}$/i.test(appId)){ toast("App ID の形が違うようです（8-4-4-4-12 の英数字）"); return; }
+  await write(() => Store.set(P("config/onesignal"), appId ? { appId, apiKey } : null));
+  toast(appId ? "通知の設定を保存しました。次に各端末で 🔕 を押して通知をオンにしてください" : "通知の設定を削除しました");
+}
+async function testPush(){
+  if(!osSubscribed()){ notice("先にこの端末で通知をオンにしてください（右上の 🔕 を押します）。"); return; }
+  const ok = await pushTo([me.memberId], "Creatal fff のテスト通知", "この通知が届けば設定は完了です 🎉", "dashboard", true);
+  toast(ok ? "テスト通知を送りました。数秒で届きます" : "送信に失敗しました。API キーを確認してください");
+}
+
+/* =====================================================================
+ * Googleカレンダー連携（TimeTree で表示する用）
+ * ===================================================================== */
+const GCAL_SCOPE = "https://www.googleapis.com/auth/calendar";
+let gcalCfg = null;
+const gcal = { token: null, exp: 0, syncing: false, timer: null, last: null, error: null, pending: false, lastHash: null };
+function onGcalConfig(v){ gcalCfg = v || null; if(currentTab === "calendar") renderGcalChip(); if(currentTab === "members") renderSettings(); }
+async function gcalToken(interactive){
+  if(gcal.token && Date.now() < gcal.exp) return gcal.token;
+  if(!interactive) return null;
+  if(!Store.accessToken){ const e = new Error("demo"); e.code = "demo"; throw e; }
+  const t = await Store.accessToken(GCAL_SCOPE);
+  if(!t) throw new Error("Googleの許可を取得できませんでした");
+  gcal.token = t; gcal.exp = Date.now() + 50 * 60000;
+  return t;
+}
+async function gfetch(path, opts = {}){
+  const res = await fetch("https://www.googleapis.com/calendar/v3/" + path, {
+    ...opts, headers: { ...(opts.headers || {}), Authorization: "Bearer " + gcal.token, ...(opts.body ? { "Content-Type": "application/json" } : {}) }
+  });
+  if(res.status === 204) return null;
+  const j = await res.json().catch(() => ({}));
+  if(!res.ok){ const e = new Error((j.error && j.error.message) || res.statusText || ("HTTP " + res.status)); e.status = res.status; e.reason = j.error && j.error.errors && j.error.errors[0] && j.error.errors[0].reason; throw e; }
+  return j;
+}
+function gcalError(e){
+  console.error(e);
+  const code = e.code || "";
+  if(code === "auth/popup-closed-by-user" || code === "auth/cancelled-popup-request") return;
+  if(code === "demo") notice("デモモードではGoogleカレンダーと連携できません。");
+  else if(code === "auth/popup-blocked") notice("ポップアップがブロックされました。このサイトのポップアップを許可して、もう一度押してください。");
+  else if(code === "auth/user-mismatch") notice("アプリにログインしているのと同じ Google アカウントを選んでください。");
+  else if(e.status === 403 && /has not been used|is disabled|accessNotConfigured|SERVICE_DISABLED/i.test(e.message + " " + (e.reason || "")))
+    notice("Google Calendar API がまだオンになっていません。\nGoogle Cloud コンソールで、プロジェクト「creatal-fff」の「Google Calendar API」を「有効にする」にしてから、数分待ってもう一度お試しください。");
+  else if(e.status === 403 || e.status === 404) notice("このカレンダーに書き込む権限がありません。カレンダーを作った人に共有してもらうか、作った人の端末で同期してください。\n（" + e.message + "）");
+  else notice("Googleカレンダーとの同期に失敗しました：" + (e.message || e));
+}
+async function setupGcal(){
+  if(DEMO){ notice("デモモードではGoogleカレンダーと連携できません。"); return; }
+  try{
+    await gcalToken(true);
+    toast("Googleカレンダーを作成しています…");
+    const cal = await gfetch("calendars", { method: "POST", body: JSON.stringify({ summary: "Creatal fff", description: "Creatal fff のタスクの締切・取り組み期間・ミーティング（アプリから自動で反映）", timeZone: "Asia/Tokyo" }) });
+    const failed = [];
+    for(const m of S.members){
+      if(!m.email || m.id === me.memberId) continue;
+      try{ await gfetch(`calendars/${encodeURIComponent(cal.id)}/acl?sendNotifications=true`, { method: "POST", body: JSON.stringify({ role: "writer", scope: { type: "user", value: m.email } }) }); }
+      catch(e){ failed.push(m.name); }
+    }
+    gcalCfg = { calendarId: cal.id, owner: me.memberId, createdAt: Date.now() };
+    await Store.set(P("config/gcal"), gcalCfg);
+    await Store.remove(P("gcalSync"));
+    gcal.lastHash = null;
+    await gcalSync(true);
+    notice(`Googleカレンダーに「Creatal fff」を作り、予定を反映しました。` + (failed.length ? `\n（${failed.join("、")} さんへの共有に失敗しました）` : `\nほかのメンバーには、カレンダー共有の案内メールが届きます。`));
+  }catch(e){ gcalError(e); }
+}
+async function unlinkGcal(){
+  if(!await ask("Googleカレンダー連携を解除しますか？（Googleカレンダー側の「Creatal fff」カレンダーはそのまま残ります）", { ok: "解除する", danger: true })) return;
+  await write(() => Store.update(ROOT, { "config/gcal": null, "gcalSync": null }));
+  gcalCfg = null; renderSettings();
+}
+function addMin(hhmm, min){
+  const [h, m] = hhmm.split(":").map(Number); let t = Math.min(h * 60 + m + min, 23 * 60 + 59);
+  return `${pad(Math.floor(t / 60))}:${pad(t % 60)}`;
+}
+function gcalDesired(){
+  const out = {};
+  S.tasks.forEach(t => {
+    if(t.status === "取りやめ") return;
+    const ds = derivedStatus(t), done = ds === "完了";
+    const desc = [`プロジェクト：${projectName(t.projectId)}`, `担当：${assigneeIds(t).map(memberName).join("、") || "未割当"}`, `状態：${ds}`]
+      .concat(t.note ? ["", t.note] : []).concat(["", "（Creatal fff から自動で反映）"]).join("\n");
+    if(t.deadline) out["d_" + t.id] = { summary: `${done ? "✅" : "〆"} ${t.title}`, description: desc, start: { date: t.deadline }, end: { date: addDays(t.deadline, 1) }, colorId: done ? "2" : "11", transparency: "transparent" };
+    if(t.start && t.deadline && t.start < t.deadline) out["p_" + t.id] = { summary: `▶ ${t.title}（取り組み期間）`, description: desc, start: { date: t.start }, end: { date: addDays(t.deadline, 1) }, colorId: done ? "2" : "9", transparency: "transparent" };
+  });
+  S.meetings.forEach(m => {
+    if(!m.date) return;
+    const desc = [m.projectId ? `プロジェクト：${projectName(m.projectId)}` : "", `参加者：${meetingAttendees(m).map(memberName).join("、") || "—"}`, "",
+      "アジェンダ：", ...agendaItems(m).map((a, i) => `${i + 1}. ${a.text}`), m.docUrl ? `\n議事録：${m.docUrl}` : "", "", "（Creatal fff から自動で反映）"].filter(x => x !== null).join("\n");
+    let start, end;
+    if(m.start){
+      start = { dateTime: `${m.date}T${m.start}:00`, timeZone: "Asia/Tokyo" };
+      end = { dateTime: `${m.date}T${m.end && m.end > m.start ? m.end : addMin(m.start, 60)}:00`, timeZone: "Asia/Tokyo" };
+    }else{ start = { date: m.date }; end = { date: addDays(m.date, 1) }; }
+    out["m_" + m.id] = { summary: `🗓 ${m.title}`, location: m.place || "", description: desc, start, end, colorId: "3" };
+  });
+  return out;
+}
+const gEventId = (key) => "fff" + [...new TextEncoder().encode(key)].map(b => b.toString(16).padStart(2, "0")).join("");
+function hashStr(s){ let h = 5381; for(let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); }
+function gcalMaybeSync(){
+  if(!gcalCfg || DEMO) return;
+  const h = hashStr(JSON.stringify(gcalDesired()));
+  if(h === gcal.lastHash) return;
+  if(!gcal.token || Date.now() >= gcal.exp){ gcal.pending = true; renderGcalChip(); return; }
+  clearTimeout(gcal.timer);
+  gcal.timer = setTimeout(() => gcalSync(false), 5000);
+}
+async function gcalSync(interactive){
+  if(!gcalCfg || gcal.syncing) return;
+  try{
+    if(!await gcalToken(interactive)){ gcal.pending = true; renderGcalChip(); return; }
+    gcal.syncing = true; gcal.error = null; renderGcalChip();
+    const want = gcalDesired();
+    const wantHash = hashStr(JSON.stringify(want));
+    const reg = (await Store.get(P("gcalSync"))) || {};
+    const cal = encodeURIComponent(gcalCfg.calendarId);
+    const upd = {}; let n = 0;
+    for(const [key, ev] of Object.entries(want)){
+      const h = hashStr(JSON.stringify(ev));
+      if(reg[key] === h) continue;
+      const id = gEventId(key);
+      try{
+        if(reg[key]) await gfetch(`calendars/${cal}/events/${id}`, { method: "PUT", body: JSON.stringify({ ...ev, id, status: "confirmed" }) });
+        else await gfetch(`calendars/${cal}/events`, { method: "POST", body: JSON.stringify({ ...ev, id }) });
+      }catch(e){
+        if(e.status === 409) await gfetch(`calendars/${cal}/events/${id}`, { method: "PUT", body: JSON.stringify({ ...ev, id, status: "confirmed" }) });
+        else if(e.status === 404) await gfetch(`calendars/${cal}/events`, { method: "POST", body: JSON.stringify({ ...ev, id }) });
+        else throw e;
+      }
+      upd[key] = h; n++;
+    }
+    for(const key of Object.keys(reg)){
+      if(want[key]) continue;
+      try{ await gfetch(`calendars/${cal}/events/${gEventId(key)}`, { method: "DELETE" }); }
+      catch(e){ if(e.status !== 404 && e.status !== 410) throw e; }
+      upd[key] = null; n++;
+    }
+    if(Object.keys(upd).length) await Store.update(P("gcalSync"), upd);
+    gcal.last = Date.now(); gcal.pending = false; gcal.lastHash = wantHash;
+    if(interactive) toast(n ? `Googleカレンダーに ${n} 件反映しました` : "Googleカレンダーは最新の状態です");
+  }catch(e){
+    gcal.error = e;
+    if(e.status === 401){ gcal.token = null; gcal.pending = true; }
+    if(interactive) gcalError(e);
+  }finally{
+    gcal.syncing = false; renderGcalChip();
+  }
+}
+function renderGcalChip(){
+  const el = document.getElementById("gcalChip"); if(!el) return;
+  if(!gcalCfg){
+    el.innerHTML = `<span class="muted-text">📅 Googleカレンダー・TimeTree に予定を反映したいときは、「メンバー」タブの「Googleカレンダー連携」から設定できます。</span>`;
+    return;
+  }
+  let st;
+  if(gcal.syncing) st = "同期しています…";
+  else if(gcal.error) st = `<span style="color:var(--danger)">同期に失敗しました</span>`;
+  else if(gcal.pending || !gcal.token) st = "変更をGoogleカレンダーに反映するには「同期」を押してください（約1時間ごとに許可が必要です）";
+  else st = gcal.last ? `${fmtStamp(gcal.last)} に同期済み・変更は自動で反映されます` : "連携中";
+  el.innerHTML = `<span>📅 Googleカレンダー連携：${st}</span><button class="btn secondary small" onclick="gcalSync(true)" ${gcal.syncing ? "disabled" : ""}>🔄 同期</button>`;
+}
+
+/* =====================================================================
+ * 設定（メンバータブ）
+ * ===================================================================== */
+function renderSettings(){
+  const box = document.getElementById("settingsBox"); if(!box) return;
+  const owner = gcalCfg && gcalCfg.owner ? memberName(gcalCfg.owner) : "";
+  box.innerHTML = `
+    <div class="card settings-card">
+      <h3>🔔 通知の設定（アプリを閉じていても届く通知）</h3>
+      <p class="muted-text">OneSignal（無料）の App ID と API キーを入れて保存します。保存したあと、それぞれの端末で右上の 🔕 を押すと通知がオンになります。iPhone は「ホーム画面に追加」したアイコンから開いてください。</p>
+      <div class="form-2col">
+        <div class="form-row"><label>App ID</label><input type="text" id="osAppId" value="${esc((osCfg && osCfg.appId) || "")}" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" autocomplete="off"></div>
+        <div class="form-row"><label>REST API Key</label><input type="password" id="osApiKey" value="${esc((osCfg && osCfg.apiKey) || "")}" placeholder="os_v2_app_..." autocomplete="off"></div>
+      </div>
+      <div class="settings-actions">
+        <button class="btn" onclick="saveOsConfig()">保存</button>
+        <button class="btn secondary" onclick="testPush()">この端末にテスト通知</button>
+        <span class="muted-text">${osCfg && osCfg.appId ? (osSubscribed() ? "✅ この端末は通知オン" : "この端末はまだ通知オフ") : "未設定"}</span>
+      </div>
+    </div>
+    <div class="card settings-card">
+      <h3>📅 Googleカレンダー連携（TimeTree で表示）</h3>
+      ${gcalCfg ? `
+        <p class="muted-text">「Creatal fff」カレンダーと連携中です（作成：${esc(owner)}）。タスクの締切・取り組み期間・ミーティングが、アプリを開いている間に自動で反映されます。</p>
+        <div class="settings-actions">
+          <button class="btn" onclick="gcalSync(true)">🔄 今すぐ同期</button>
+          <button class="btn danger" onclick="unlinkGcal()">連携を解除</button>
+        </div>
+        <details class="tt-help"><summary>TimeTree に表示する方法</summary>
+          <ol>
+            <li>スマホの「Googleカレンダー」アプリで、「Creatal fff」カレンダーが表示されているか確認します（共有メールの「カレンダーに追加」を押すと出ます）。</li>
+            <li>iPhone の場合は「設定」→「カレンダー」→「アカウント」で、その Google アカウントのカレンダーをオンにします。</li>
+            <li>TimeTree アプリの カレンダー設定 で、外部カレンダー（iPhone / Android のカレンダー）の表示をオンにし、「Creatal fff」を選びます。</li>
+          </ol>
+        </details>`
+      : `
+        <p class="muted-text">ボタンを押すと、あなたの Google アカウントに「Creatal fff」カレンダーを作り、ほかのメンバーにも共有します。そのカレンダーを TimeTree で表示すると、アプリの予定が TimeTree にも出ます。</p>
+        <div class="settings-actions"><button class="btn" onclick="setupGcal()">Googleカレンダーを作って連携する</button></div>`}
+    </div>`;
+}
+
+/* =====================================================================
  * 起動
  * ===================================================================== */
 (async function boot(){
@@ -3845,6 +5292,7 @@ window.addEventListener("pagehide", () => { if(call.joined) leaveCall(true); });
     document.getElementById("demoSignin").style.display = "";
     document.getElementById("demoEmail").addEventListener("keydown", e => { if(e.key === "Enter") signIn(); });
   }
+  bootFromCache();
   try{
     await Store.init();
     Store.onAuth(onAuthChanged);
